@@ -1,0 +1,12 @@
+---
+description: Rules for Docker-compose, environment variables, and databases
+globs: "docker-compose*.yml, **/config/**/*, .env*"
+alwaysApply: false
+---
+
+Inside the markdown content, specify:
+
+1. Docker Standards: Use official, lightweight Alpine or Slim images where possible. Always define healthchecks for database services (PostgreSQL, Redis) to ensure proper startup sequencing.
+2. Environment Variables: Never hardcode credentials. Always use process.env and provide a comprehensive '.env.example' file.
+3. Data Persistence: Always map named volumes for database containers to prevent data loss on container restart.
+   Что мы получили в итоге?

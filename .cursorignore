@@ -1,0 +1,53 @@
+# Dependencies (Зависимости)
+**/node_modules/
+**/package-lock.json
+**/yarn.lock
+**/pnpm-lock.yaml
+
+# Build outputs (Результаты сборки)
+**/dist/
+**/.next/
+**/.nuxt/
+**/.out/
+**/build/
+**/.vite/
+
+# User Uploaded Files (Загружаемые файлы пользователей)
+# ИИ не должен тратить контекст на чтение бинарных картинок или чужих TXT
+**/uploads/
+**/storage/
+
+# Environment and Secrets (Секреты и конфигурации среды)
+**/.env
+**/.env.*
+!**/.env.example
+**/.local
+
+# Logs and runtime data (Логи и системные файлы)
+**/logs/
+**/*.log
+**/npm-debug.log*
+**/.pids/
+**/*.pid
+**/*.seed
+**/*.pid.lock
+
+# IDE and System files (Системные файлы)
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Prisma local artifacts (Локальные артефакты базы данных)
+**/prisma/.env
+**/prisma/dev.db
+**/prisma/dev.db-journal
+
+# Version Control (Система контроля версий)
+.git/
+.gitignore

@@ -1,0 +1,14 @@
+---
+description: Rules for Node.js Express and TypeScript backend development
+globs: "backend/**/*"
+alwaysApply: false
+---
+
+Inside the markdown content, specify the following technical requirements:
+
+1. Architecture: Strict layered architecture (Routing -> Controllers -> Services -> Repositories).
+2. Type Safety: Strict TypeScript, absolutely no 'any' types, prefer interface over type for models.
+3. Input Validation: Always use 'zod' for validating incoming request bodies in controllers.
+4. Security: Mandatory XSS sanitization for any rich text using 'sanitize-html' inside services/controllers.
+5. Error Handling: Always forward errors to a centralized Express error-handling middleware. Do not catch errors without logging or rethrowing.
+6. Language Rule: For any programming terms or comments within the code, always append the English name in parentheses next to the Russian technical concept.

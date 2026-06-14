@@ -1,0 +1,22 @@
+{
+  "threshold": 5,
+  "reporters": ["console"],
+  "gitignore": true,
+  "ignore": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/.next/**",
+    "**/.nuxt/**",
+    "**/.out/**",
+    "**/build/**",
+    "**/.vite/**",
+    "**/uploads/**",
+    "**/storage/**",
+    "**/.local/**",
+    "**/logs/**",
+    "**/.vscode/**",
+    "**/.idea/**",
+    "**/prisma/dev.db",
+    "**/prisma/dev.db-journal"
+  ]
+}

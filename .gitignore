@@ -1,0 +1,48 @@
+# Dependencies
+**/node_modules/
+**/package-lock.json
+**/yarn.lock
+**/pnpm-lock.yaml
+
+# Build outputs
+**/dist/
+**/.next/
+**/.nuxt/
+**/.out/
+**/build/
+**/.vite/
+
+# User uploaded files
+**/uploads/
+**/storage/
+
+# Environment and secrets
+**/.env
+**/.env.*
+!**/.env.example
+**/.local
+
+# Logs and runtime data
+**/logs/
+**/*.log
+**/npm-debug.log*
+**/.pids/
+**/*.pid
+**/*.seed
+**/*.pid.lock
+
+# IDE and system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Prisma local artifacts
+**/prisma/.env
+**/prisma/dev.db
+**/prisma/dev.db-journal
