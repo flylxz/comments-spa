@@ -1,5 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import { ZodError } from 'zod';
+
+import { FieldValidationError } from '../errors/fieldValidationError.js';
 import { Prisma } from '../generated/prisma/client.js';
 
 export interface AppError extends Error {
@@ -19,6 +21,14 @@ export const errorHandler = (
       });
       return;
     }
+  }
+
+  if (error instanceof FieldValidationError) {
+    res.status(400).json({
+      field: error.field,
+      message: error.message,
+    });
+    return;
   }
 
   if (error instanceof ZodError) {

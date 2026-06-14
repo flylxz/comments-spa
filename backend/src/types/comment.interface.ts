@@ -14,6 +14,7 @@ export interface CreateCommentInput {
   email: string;
   homePage?: string | null;
   captchaId: string;
+  captchaAnswer: string;
   text: string;
   parentId?: number;
 }
