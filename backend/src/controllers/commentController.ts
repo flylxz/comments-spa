@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 
 import type { CreateCommentSchema } from '../schemas/comment.schema.js';
 import * as commentService from '../services/commentService.js';
+import { emitNewComment } from '../services/websocketService.js';
 
 export const getComments = (
   _req: Request,
@@ -23,6 +24,7 @@ export const createComment = (
 ): void => {
   try {
     const comment = commentService.createComment(req.body);
+    emitNewComment(comment);
     res.status(201).json({ data: comment });
   } catch (error) {
     next(error);
