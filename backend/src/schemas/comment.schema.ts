@@ -17,6 +17,9 @@ export const createCommentSchema = z.object({
   captchaId: z
     .string({ required_error: 'captchaId is required' })
     .min(1, 'captchaId is required'),
+  captchaAnswer: z
+    .string({ required_error: 'captchaAnswer is required' })
+    .min(1, 'captchaAnswer is required'),
   text: z
     .string({ required_error: 'text is required' })
     .min(1, 'text is required'),

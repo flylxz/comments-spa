@@ -1,5 +1,4 @@
 import sanitizeHtml from 'sanitize-html';
-
 import * as commentRepository from '../repositories/commentRepository.js';
 import type {
   Comment,
@@ -7,6 +6,7 @@ import type {
   PaginatedCommentsQuery,
   PaginatedCommentsResult,
 } from '../types/comment.interface.js';
+import * as captchaService from './captchaService.js';
 
 const ALLOWED_TAGS = ['a', 'code', 'i', 'strong'] as const;
 
@@ -26,11 +26,17 @@ export const getComments = async (
 
 export const createComment = async (
   input: CreateCommentInput,
-): Promise<Comment> =>
-  commentRepository.createCommentRecord({
+): Promise<Comment> => {
+  captchaService.verifyCaptcha({
+    captchaId: input.captchaId,
+    captchaAnswer: input.captchaAnswer,
+  });
+
+  return commentRepository.createCommentRecord({
     userName: input.userName,
     email: input.email,
     homePage: input.homePage ?? null,
     text: sanitizeCommentText(input.text),
     parentId: input.parentId,
   });
+};
