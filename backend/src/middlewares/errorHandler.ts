@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 import { ZodError } from 'zod';
+import { Prisma } from '../generated/prisma/client.js';
 
 export interface AppError extends Error {
   statusCode?: number;
@@ -11,6 +12,15 @@ export const errorHandler = (
   res: Response,
   _next: NextFunction,
 ): void => {
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error.code === 'P2003') {
+      res.status(400).json({
+        message: 'Invalid parentId: parent comment does not exist',
+      });
+      return;
+    }
+  }
+
   if (error instanceof ZodError) {
     const fieldErrors = error.errors.reduce<Record<string, string[]>>(
       (acc, issue) => {

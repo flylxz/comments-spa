@@ -1,12 +1,12 @@
-import { randomUUID } from 'node:crypto';
 import sanitizeHtml from 'sanitize-html';
 
+import * as commentRepository from '../repositories/commentRepository.js';
 import type {
   Comment,
   CreateCommentInput,
+  PaginatedCommentsQuery,
+  PaginatedCommentsResult,
 } from '../types/comment.interface.js';
-
-const comments: Comment[] = [];
 
 const ALLOWED_TAGS = ['a', 'code', 'i', 'strong'] as const;
 
@@ -19,20 +19,18 @@ const sanitizeCommentText = (text: string): string =>
     disallowedTagsMode: 'discard',
   });
 
-export const getAllComments = (): Comment[] => [...comments];
+export const getComments = async (
+  query: PaginatedCommentsQuery,
+): Promise<PaginatedCommentsResult> =>
+  commentRepository.findTopLevelComments(query);
 
-export const createComment = (input: CreateCommentInput): Comment => {
-  const comment: Comment = {
-    id: randomUUID(),
+export const createComment = async (
+  input: CreateCommentInput,
+): Promise<Comment> =>
+  commentRepository.createCommentRecord({
     userName: input.userName,
     email: input.email,
     homePage: input.homePage ?? null,
-    captchaId: input.captchaId,
     text: sanitizeCommentText(input.text),
-    createdAt: new Date().toISOString(),
-  };
-
-  comments.push(comment);
-
-  return comment;
-};
+    parentId: input.parentId,
+  });

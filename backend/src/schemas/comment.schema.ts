@@ -20,6 +20,14 @@ export const createCommentSchema = z.object({
   text: z
     .string({ required_error: 'text is required' })
     .min(1, 'text is required'),
+  parentId: z.number().int().positive().optional(),
+});
+
+export const getCommentsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  sortBy: z.enum(['userName', 'email', 'createdAt']).default('createdAt'),
+  sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
 
 export type CreateCommentSchema = z.infer<typeof createCommentSchema>;
+export type GetCommentsQuerySchema = z.infer<typeof getCommentsQuerySchema>;

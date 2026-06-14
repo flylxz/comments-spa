@@ -1,29 +1,38 @@
 import type { NextFunction, Request, Response } from 'express';
-
-import type { CreateCommentSchema } from '../schemas/comment.schema.js';
+import { getValidatedQuery } from '../middlewares/validateQuery.js';
+import type {
+  CreateCommentSchema,
+  GetCommentsQuerySchema,
+} from '../schemas/comment.schema.js';
 import * as commentService from '../services/commentService.js';
 import { emitNewComment } from '../services/websocketService.js';
 
-export const getComments = (
+export const getComments = async (
   _req: Request,
   res: Response,
   next: NextFunction,
-): void => {
+): Promise<void> => {
   try {
-    const comments = commentService.getAllComments();
-    res.status(200).json({ data: comments });
+    const { page, sortBy, sortOrder } =
+      getValidatedQuery<GetCommentsQuerySchema>(res);
+    const result = await commentService.getComments({
+      page,
+      sortBy,
+      sortOrder,
+    });
+    res.status(200).json(result);
   } catch (error) {
     next(error);
   }
 };
 
-export const createComment = (
+export const createComment = async (
   req: Request<object, object, CreateCommentSchema>,
   res: Response,
   next: NextFunction,
-): void => {
+): Promise<void> => {
   try {
-    const comment = commentService.createComment(req.body);
+    const comment = await commentService.createComment(req.body);
     emitNewComment(comment);
     res.status(201).json({ data: comment });
   } catch (error) {
