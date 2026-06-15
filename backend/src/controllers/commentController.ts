@@ -32,7 +32,10 @@ export const createComment = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const comment = await commentService.createComment(req.body);
+    const comment = await commentService.createComment({
+      ...req.body,
+      fileUrl: req.uploadedFileUrl ?? null,
+    });
     emitNewComment(comment);
     res.status(201).json({ data: comment });
   } catch (error) {

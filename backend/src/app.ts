@@ -1,3 +1,6 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import 'dotenv/config';
 
 import { createServer } from 'node:http';
@@ -11,8 +14,13 @@ import { initWebSocket } from './services/websocketService.js';
 const app = express();
 const httpServer = createServer(app);
 const PORT = Number(process.env.PORT) || 3000;
+const uploadsPath = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '../uploads',
+);
 
 app.use(express.json());
+app.use('/uploads', express.static(uploadsPath));
 
 app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'ok' });

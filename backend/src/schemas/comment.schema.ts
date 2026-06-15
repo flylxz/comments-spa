@@ -23,7 +23,7 @@ export const createCommentSchema = z.object({
   text: z
     .string({ required_error: 'text is required' })
     .min(1, 'text is required'),
-  parentId: z.number().int().positive().optional(),
+  parentId: z.coerce.number().int().positive().optional(),
 });
 
 export const getCommentsQuerySchema = z.object({

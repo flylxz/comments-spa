@@ -13,6 +13,7 @@ interface FlatComment {
   email: string;
   homePage: string | null;
   text: string;
+  fileUrl: string | null;
   createdAt: Date;
   parentId: number | null;
 }
@@ -26,6 +27,7 @@ const mapToComment = (
   email: record.email,
   homePage: record.homePage,
   text: record.text,
+  fileUrl: record.fileUrl,
   createdAt: record.createdAt.toISOString(),
   parentId: record.parentId,
   replies,
@@ -122,6 +124,7 @@ export interface CreateCommentRecordInput {
   email: string;
   homePage: string | null;
   text: string;
+  fileUrl: string | null;
   parentId?: number;
 }
 
@@ -134,6 +137,7 @@ export const createCommentRecord = async (
       email: input.email,
       homePage: input.homePage,
       text: input.text,
+      fileUrl: input.fileUrl,
       parentId: input.parentId ?? null,
     },
   });
