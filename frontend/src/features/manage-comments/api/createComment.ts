@@ -1,22 +1,15 @@
-import { axiosClient } from '@/api/axiosClient';
-import type {
-  CaptchaResponse,
-  Comment,
-  CreateCommentPayload,
-  GetCommentsParams,
-  PaginatedCommentsResponse,
-} from '@/features/comments/types/comment';
+import type { Comment } from '@/entities/comment/model/types';
+import { axiosClient } from '@/shared/api/axiosClient';
 
-/** Fetches a paginated, server-built comment tree. */
-export const getComments = async (
-  params: GetCommentsParams,
-): Promise<PaginatedCommentsResponse> => {
-  const { data } = await axiosClient.get<PaginatedCommentsResponse>(
-    '/comments',
-    { params },
-  );
-
-  return data;
+export type CreateCommentPayload = {
+  userName: string;
+  email: string;
+  homePage?: string | null;
+  captchaId: string;
+  captchaAnswer: string;
+  text: string;
+  parentId?: number;
+  file?: File;
 };
 
 /** Creates a comment via multipart/form-data (supports optional file upload). */
@@ -49,11 +42,4 @@ export const createComment = async (
   );
 
   return data.data;
-};
-
-/** Fetches a new captcha challenge for comment submission. */
-export const getCaptcha = async (): Promise<CaptchaResponse> => {
-  const { data } = await axiosClient.get<CaptchaResponse>('/captcha');
-
-  return data;
 };

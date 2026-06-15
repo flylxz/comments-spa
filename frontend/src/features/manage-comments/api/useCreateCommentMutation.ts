@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { createComment } from '@/features/comments/api/commentApi';
-import { commentQueryKeys } from '@/features/comments/api/commentQueryKeys';
+import { commentQueryKeys } from '@/entities/comment/api/queryKeys';
+
+import { createComment } from '@/features/manage-comments/api/createComment';
 
 /** Submits a new comment and invalidates cached comment lists on success. */
 export const useCreateCommentMutation = () => {

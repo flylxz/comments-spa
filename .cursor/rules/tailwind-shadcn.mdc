@@ -1,0 +1,12 @@
+---
+description: Styling guidelines using Tailwind CSS utilities and shadcn/ui building blocks
+globs: "frontend/src/**/*.tsx"
+alwaysApply: false
+---
+
+# Tailwind CSS & shadcn/ui Rules
+
+- **Utility First**: Write styles exclusively using Tailwind CSS utility classes. Avoid writing custom CSS in separate files.
+- **shadcn/ui Usage**: Before building common primitives (Buttons, Dialogs, Selects, Inputs), verify if they exist in `src/components/ui/`. Use them as basic building blocks.
+- **Iconography**: Strictly use `lucide-react` for all icons. Keep sizes consistent using responsive classes (e.g., `className="w-4 h-4"`).
+- **Layouts**: Prefer CSS Grid (`grid grid-cols-...`) and Flexbox (`flex flex-row...`) utilities. Avoid deprecated or legacy layout techniques.

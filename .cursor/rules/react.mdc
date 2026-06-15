@@ -1,0 +1,13 @@
+---
+description: Rules for React component development and state management
+globs: "frontend/src/**/*.tsx"
+alwaysApply: false
+---
+
+# React Development Standards
+
+- **Component Syntax**: Use arrow functions for components: `const Component = () => { ... }`.
+- **Hooks**: Strictly follow the Rules of Hooks. Never call hooks conditionally.
+- **Form Handling**: Use `react-hook-form` paired with `zod` schemas for any forms with more than 1 input. Do not create multiple manual `useState` hooks for form fields.
+- **Architecture**: Follow a feature-based folder structure. Local sub-components must reside within their respective feature folder, not the global `components/` directory.
+- **Optimization**: Use `useMemo` and `useCallback` only when passing props to heavy child components or as dependencies in `useEffect`. Don't over-optimize primitive renders.

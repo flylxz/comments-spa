@@ -3,12 +3,12 @@ export interface Comment {
   id: number;
   userName: string;
   email: string;
-  homePage: string | null;
+  homePage?: string;
   text: string;
-  fileUrl: string | null;
+  fileUrl?: string;
   parentId: number | null;
   createdAt: string;
-  replies: Comment[];
+  replies?: Comment[];
 }
 
 export type SortField = 'createdAt' | 'userName' | 'email';
@@ -30,22 +30,4 @@ export type PaginatedCommentsResponse = {
     total: number;
     totalPages: number;
   };
-};
-
-/** Payload for POST /comments (file sent as multipart field). */
-export type CreateCommentPayload = {
-  userName: string;
-  email: string;
-  homePage?: string | null;
-  captchaId: string;
-  captchaAnswer: string;
-  text: string;
-  parentId?: number;
-  file?: File;
-};
-
-/** Response from GET /captcha. */
-export type CaptchaResponse = {
-  captchaSvg: string;
-  captchaId: string;
 };
