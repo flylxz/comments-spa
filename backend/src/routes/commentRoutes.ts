@@ -4,6 +4,10 @@ import {
   createComment,
   getComments,
 } from '../controllers/commentController.js';
+import {
+  handleUpload,
+  processUploadedFile,
+} from '../middlewares/uploadMiddleware.js';
 import { validateBody } from '../middlewares/validateBody.js';
 import { validateQuery } from '../middlewares/validateQuery.js';
 import {
@@ -14,6 +18,12 @@ import {
 const commentRoutes = Router();
 
 commentRoutes.get('/', validateQuery(getCommentsQuerySchema), getComments);
-commentRoutes.post('/', validateBody(createCommentSchema), createComment);
+commentRoutes.post(
+  '/',
+  handleUpload,
+  processUploadedFile,
+  validateBody(createCommentSchema),
+  createComment,
+);
 
 export default commentRoutes;

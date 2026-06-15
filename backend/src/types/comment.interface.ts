@@ -4,6 +4,7 @@ export interface Comment {
   email: string;
   homePage: string | null;
   text: string;
+  fileUrl: string | null;
   createdAt: string;
   parentId: number | null;
   replies: Comment[];
@@ -16,6 +17,7 @@ export interface CreateCommentInput {
   captchaId: string;
   captchaAnswer: string;
   text: string;
+  fileUrl?: string | null;
   parentId?: number;
 }
 
