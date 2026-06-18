@@ -17,7 +17,7 @@ const envSchema = z.object({
         ? value
         : 'http://localhost:3000/api',
     )
-    .pipe(z.string().url()),
+    .pipe(z.string().url().or(z.string().startsWith('/'))),
   VITE_API_ORIGIN: optionalUrl,
 });
 

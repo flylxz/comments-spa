@@ -60,7 +60,7 @@ export const commentFormSchema = z.object({
     .email('Email must be a valid email address'),
   homePage: z.union([z.literal(''), z.string().url()]).optional(),
   captchaId: z.string().min(1, 'Captcha is required'),
-  captchaAnswer: z.string().min(1, 'Captcha answer is required'),
+  captchaValue: z.string().min(1, 'Captcha answer is required'),
   text: z.string().min(1, 'Comment text is required'),
   parentId: z.number().int().positive().optional(),
   file: z
