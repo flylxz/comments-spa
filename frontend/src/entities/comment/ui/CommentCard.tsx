@@ -1,4 +1,3 @@
-import { format } from 'date-fns';
 import {
   Bookmark,
   ChevronDown,
@@ -8,6 +7,7 @@ import {
 } from 'lucide-react';
 import { motion, type Variants } from 'motion/react';
 
+import { formatCommentDate } from '@/entities/comment/lib/formatCommentDate';
 import { sanitizeCommentHtml } from '@/entities/comment/lib/sanitizeCommentHtml';
 import type { Comment } from '@/entities/comment/model/types';
 import { CommentAttachment } from '@/entities/comment/ui/CommentAttachment';
@@ -29,16 +29,6 @@ const getInitials = (userName: string): string => {
   }
 
   return userName.slice(0, 2).toUpperCase();
-};
-
-const formatCreatedAt = (createdAt: string): string => {
-  const date = new Date(createdAt);
-
-  if (Number.isNaN(date.getTime())) {
-    return createdAt;
-  }
-
-  return format(date, 'dd MMM yyyy, HH:mm');
 };
 
 const cardVariants: Variants = {
@@ -75,7 +65,7 @@ export const CommentCard = ({ comment, onReplyClick }: CommentCardProps) => {
               className="text-sm text-muted-foreground"
               dateTime={comment.createdAt}
             >
-              {formatCreatedAt(comment.createdAt)}
+              {formatCommentDate(comment.createdAt)}
             </time>
           </div>
         </div>

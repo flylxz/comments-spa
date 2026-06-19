@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import { getComments } from '@/entities/comment/api/getComments';
 import { commentQueryKeys } from '@/entities/comment/api/queryKeys';
@@ -9,4 +9,5 @@ export const useCommentsQuery = (params: GetCommentsParams) =>
   useQuery({
     queryKey: commentQueryKeys.list(params),
     queryFn: () => getComments(params),
+    placeholderData: keepPreviousData,
   });
