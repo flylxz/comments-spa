@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { validateCommentHtml } from '@/entities/comment/lib/validateCommentHtml';
+
 /** Mirrors backend uploadMiddleware allowed extensions. */
 const ALLOWED_FILE_EXTENSIONS = [
   '.jpg',
@@ -61,7 +63,19 @@ export const commentFormSchema = z.object({
   homePage: z.union([z.literal(''), z.string().url()]).optional(),
   captchaId: z.string().min(1, 'Captcha is required'),
   captchaValue: z.string().min(1, 'Captcha answer is required'),
-  text: z.string().min(1, 'Comment text is required'),
+  text: z
+    .string()
+    .min(1, 'Comment text is required')
+    .superRefine((value, context) => {
+      const htmlError = validateCommentHtml(value);
+
+      if (htmlError !== null) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: htmlError,
+        });
+      }
+    }),
   parentId: z.number().int().positive().optional(),
   file: z
     .instanceof(File)

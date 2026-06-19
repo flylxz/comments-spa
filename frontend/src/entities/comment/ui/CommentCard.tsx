@@ -1,5 +1,4 @@
 import { format } from 'date-fns';
-import DOMPurify from 'dompurify';
 import {
   Bookmark,
   ChevronDown,
@@ -8,7 +7,10 @@ import {
   Hash,
 } from 'lucide-react';
 
+import { sanitizeCommentHtml } from '@/entities/comment/lib/sanitizeCommentHtml';
 import type { Comment } from '@/entities/comment/model/types';
+import { CommentAttachment } from '@/entities/comment/ui/CommentAttachment';
+import { cn } from '@/shared/lib/utils';
 import { Avatar, AvatarFallback } from '@/shared/ui/avatar';
 import { Button } from '@/shared/ui/button';
 
@@ -48,7 +50,11 @@ export const CommentCard = ({ comment, onReplyClick }: CommentCardProps) => {
       id={`comment-${comment.id}`}
       className="rounded-lg border border-border bg-card p-4 text-card-foreground shadow-sm"
     >
-      <header className="flex items-start justify-between gap-4">
+      <header
+        className={cn(
+          'flex items-start justify-between gap-4 rounded-md bg-accent p-2',
+        )}
+      >
         <div className="flex min-w-0 items-center gap-3">
           <Avatar>
             <AvatarFallback>{getInitials(comment.userName)}</AvatarFallback>
@@ -70,7 +76,7 @@ export const CommentCard = ({ comment, onReplyClick }: CommentCardProps) => {
         <div className="flex shrink-0 items-center gap-1">
           <a
             href={`#comment-${comment.id}`}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
             aria-label="Permalink"
           >
             <Hash className="h-4 w-4" />
@@ -79,7 +85,7 @@ export const CommentCard = ({ comment, onReplyClick }: CommentCardProps) => {
           <Button
             variant="ghost"
             size="icon"
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:bg-accent hover:text-foreground"
             aria-label="Bookmark"
           >
             <Bookmark className="h-4 w-4" />
@@ -89,7 +95,7 @@ export const CommentCard = ({ comment, onReplyClick }: CommentCardProps) => {
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 rounded-none text-muted-foreground hover:text-foreground"
+              className="h-8 w-8 rounded-none text-muted-foreground hover:bg-accent hover:text-foreground"
               aria-label="Upvote"
             >
               <ChevronUp className="h-4 w-4" />
@@ -102,7 +108,7 @@ export const CommentCard = ({ comment, onReplyClick }: CommentCardProps) => {
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 rounded-none text-muted-foreground hover:text-foreground"
+              className="h-8 w-8 rounded-none text-muted-foreground hover:bg-accent hover:text-foreground"
               aria-label="Downvote"
             >
               <ChevronDown className="h-4 w-4" />
@@ -112,16 +118,20 @@ export const CommentCard = ({ comment, onReplyClick }: CommentCardProps) => {
       </header>
 
       <div
-        className="mt-4 text-sm leading-relaxed text-foreground [&_a]:text-primary [&_a]:underline [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_p+p]:mt-2"
+        className="mt-4 whitespace-pre-line text-sm leading-relaxed text-foreground [&_a]:text-primary [&_a]:underline [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_p+p]:mt-2"
         // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
-        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(comment.text) }}
+        dangerouslySetInnerHTML={{ __html: sanitizeCommentHtml(comment.text) }}
       />
+
+      {comment.fileUrl ? (
+        <CommentAttachment commentId={comment.id} fileUrl={comment.fileUrl} />
+      ) : null}
 
       <footer className="mt-4">
         <Button
           variant="ghost"
           size="sm"
-          className="h-auto px-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
+          className="h-auto gap-1.5 px-1 -ml-1 text-muted-foreground hover:bg-accent hover:text-foreground"
           onClick={handleReplyClick}
         >
           <CornerUpLeft className="h-4 w-4" />

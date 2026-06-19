@@ -1,0 +1,124 @@
+import { FileText, ZoomIn } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+import {
+  formatCommentAttachmentSize,
+  getCommentAttachmentFileName,
+  getCommentAttachmentFormat,
+} from '@/entities/comment/lib/parseCommentAttachmentMeta';
+import {
+  isCommentImageAttachment,
+  resolveCommentFileUrl,
+} from '@/entities/comment/lib/resolveCommentFileUrl';
+import { cn } from '@/shared/lib/utils';
+
+export type CommentAttachmentProps = {
+  commentId: number;
+  fileUrl: string;
+  className?: string;
+};
+
+export const CommentAttachment = ({
+  commentId,
+  fileUrl,
+  className,
+}: CommentAttachmentProps) => {
+  const resolvedUrl = resolveCommentFileUrl(fileUrl);
+  const fileName = getCommentAttachmentFileName(fileUrl);
+  const fileFormat = getCommentAttachmentFormat(fileUrl);
+  const [fileSize, setFileSize] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (isCommentImageAttachment(fileUrl)) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchFileSize = async (): Promise<void> => {
+      try {
+        const response = await fetch(resolvedUrl, { method: 'HEAD' });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const contentLength = response.headers.get('Content-Length');
+
+        if (!contentLength) {
+          return;
+        }
+
+        const bytes = Number.parseInt(contentLength, 10);
+
+        if (!cancelled && Number.isFinite(bytes)) {
+          setFileSize(bytes);
+        }
+      } catch {
+        // Size is optional metadata; ignore network errors.
+      }
+    };
+
+    void fetchFileSize();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fileUrl, resolvedUrl]);
+
+  if (isCommentImageAttachment(fileUrl)) {
+    return (
+      <div className={cn('mt-4', className)}>
+        <a
+          href={resolvedUrl}
+          data-lightbox={`comment-${commentId}`}
+          data-alt={`Attachment for comment ${commentId}`}
+          className="group relative inline-block h-40 w-56 cursor-zoom-in overflow-hidden rounded-xl border border-border bg-muted/30 shadow-sm transition-[transform,box-shadow] duration-300 ease-out hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
+          aria-label="View attached image"
+        >
+          <img
+            src={resolvedUrl}
+            alt={`Attachment for comment ${commentId}`}
+            className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+            loading="lazy"
+          />
+
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-300 group-hover:bg-black/20"
+          >
+            <ZoomIn className="h-7 w-7 text-white opacity-0 drop-shadow-md transition-opacity duration-300 group-hover:opacity-100" />
+          </span>
+        </a>
+      </div>
+    );
+  }
+
+  const metaParts = [
+    fileFormat,
+    fileSize !== null ? formatCommentAttachmentSize(fileSize) : null,
+  ].filter((part): part is string => Boolean(part));
+
+  return (
+    <div className={cn('mt-4', className)}>
+      <a
+        href={resolvedUrl}
+        download={fileName}
+        className="inline-flex max-w-full items-center gap-3 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm text-primary transition-colors hover:bg-muted/50"
+      >
+        <FileText className="h-4 w-4 shrink-0" aria-hidden />
+        <span className="min-w-0 text-left">
+          Download attachment:
+          <span className="block truncate font-medium text-foreground">
+            {fileName}
+          </span>
+          {metaParts.length > 0 ? (
+            <span className="block text-xs text-muted-foreground">
+              {metaParts.join(' · ')}
+            </span>
+          ) : null}
+        </span>
+      </a>
+    </div>
+  );
+};

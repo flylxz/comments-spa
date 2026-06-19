@@ -1,7 +1,9 @@
+import { useState } from 'react';
+
 import type { GetCommentsParams } from '@/entities/comment';
 import {
-  buildCommentTree,
   CommentTree,
+  normalizeCommentTree,
   useCommentsQuery,
 } from '@/entities/comment';
 import { CommentForm } from '@/features/manage-comments';
@@ -13,8 +15,21 @@ const DEFAULT_QUERY_PARAMS = {
 } satisfies GetCommentsParams;
 
 export const CommentSection = () => {
+  const [replyingToCommentId, setReplyingToCommentId] = useState<number | null>(
+    null,
+  );
   const { data, isLoading, isError, error } =
     useCommentsQuery(DEFAULT_QUERY_PARAMS);
+
+  const handleReplyClick = (commentId: number): void => {
+    setReplyingToCommentId((current) =>
+      current === commentId ? null : commentId,
+    );
+  };
+
+  const handleReplyClose = (): void => {
+    setReplyingToCommentId(null);
+  };
 
   if (isLoading) {
     return (
@@ -47,12 +62,17 @@ export const CommentSection = () => {
     return null;
   }
 
-  const treeData = buildCommentTree(data.data);
-
   return (
     <section className="flex flex-col gap-8">
       <CommentForm parentId={null} />
-      <CommentTree comments={treeData} />
+      <CommentTree
+        comments={normalizeCommentTree(data.data)}
+        replyingToCommentId={replyingToCommentId}
+        onReplyClick={handleReplyClick}
+        renderReplyForm={(commentId) => (
+          <CommentForm parentId={commentId} onSuccess={handleReplyClose} />
+        )}
+      />
     </section>
   );
 };

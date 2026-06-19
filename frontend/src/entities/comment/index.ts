@@ -1,6 +1,8 @@
 export { useCommentsQuery } from './api/useCommentsQuery';
 
 export { buildCommentTree } from './lib/buildCommentTree';
+export { flattenComments } from './lib/flattenComments';
+export { normalizeCommentTree } from './lib/normalizeCommentTree';
 export type {
   Comment,
   GetCommentsParams,
