@@ -1,0 +1,499 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import DOMPurify from 'dompurify';
+import { ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
+import { motion, type Variants } from 'motion/react';
+import { useEffect, useRef, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+
+import { useCaptchaQuery } from '@/features/manage-comments/api/useCaptchaQuery';
+import { useCreateCommentMutation } from '@/features/manage-comments/api/useCreateCommentMutation';
+import {
+  type CommentHtmlTag,
+  insertHtmlTag,
+} from '@/features/manage-comments/lib/insertHtmlTag';
+import { parseFieldValidationError } from '@/features/manage-comments/lib/parseFieldValidationError';
+import {
+  type CommentFormValues,
+  commentFormSchema,
+} from '@/features/manage-comments/model/validation';
+import { CommentHtmlToolbar } from '@/features/manage-comments/ui/CommentHtmlToolbar';
+import { cn } from '@/shared/lib/utils';
+import { Button } from '@/shared/ui/button';
+import { Input } from '@/shared/ui/input';
+import { Textarea } from '@/shared/ui/textarea';
+
+const getDefaultValues = (parentId: number | null): CommentFormValues => ({
+  userName: '',
+  email: '',
+  homePage: '',
+  captchaId: '',
+  captchaValue: '',
+  text: '',
+  parentId: parentId ?? undefined,
+  file: undefined,
+});
+
+const isSvgString = (value: string): boolean => {
+  const trimmed = value.trim();
+
+  return trimmed.startsWith('<svg') || trimmed.startsWith('<?xml');
+};
+
+const toImageSrc = (value: string): string => {
+  const trimmed = value.trim();
+
+  if (
+    trimmed.startsWith('data:image/') ||
+    trimmed.startsWith('http://') ||
+    trimmed.startsWith('https://')
+  ) {
+    return trimmed;
+  }
+
+  if (isSvgString(trimmed)) {
+    const sanitized = DOMPurify.sanitize(trimmed, {
+      USE_PROFILES: { svg: true },
+    });
+
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(sanitized)}`;
+  }
+
+  return `data:image/png;base64,${trimmed}`;
+};
+
+type CaptchaImageProps = {
+  image: string;
+  compact?: boolean;
+};
+
+const CaptchaImage = ({ image, compact = false }: CaptchaImageProps) => (
+  <img
+    src={toImageSrc(image)}
+    alt=""
+    aria-hidden
+    className={cn(
+      'shrink-0 rounded-md border border-border bg-background object-contain',
+      compact ? 'h-10 w-28' : 'h-12 w-32',
+    )}
+  />
+);
+
+export type CommentFormProps = {
+  parentId?: number | null;
+  onSuccess?: () => void;
+};
+
+const FieldError = ({ message }: { message?: string }) => (
+  <p
+    className={cn('min-h-4 text-xs text-red-600', !message && 'invisible')}
+    aria-live="polite"
+  >
+    {message ?? '\u00A0'}
+  </p>
+);
+
+const FieldLabel = ({
+  htmlFor,
+  children,
+  required = false,
+}: {
+  htmlFor: string;
+  children: string;
+  required?: boolean;
+}) => (
+  <label htmlFor={htmlFor} className="text-xs font-medium text-foreground">
+    {children}
+    {required ? <span className="text-red-500"> *</span> : null}
+  </label>
+);
+
+const boxVariants: Variants = {
+  initial: { opacity: 0, y: -20 },
+  animate: { opacity: 1, y: 0 },
+};
+
+export const CommentForm = ({
+  parentId = null,
+  onSuccess,
+}: CommentFormProps) => {
+  const isReply = parentId !== null;
+  const [isFolded, setIsFolded] = useState(false);
+  const {
+    mutate,
+    isPending,
+    isError,
+    error,
+    reset: resetMutation,
+  } = useCreateCommentMutation();
+  const {
+    data: captcha,
+    isLoading: isCaptchaLoading,
+    isError: isCaptchaError,
+    error: captchaError,
+    refetch: refetchCaptcha,
+    isFetching: isCaptchaFetching,
+  } = useCaptchaQuery();
+
+  const {
+    register,
+    control,
+    handleSubmit,
+    reset,
+    setError,
+    setValue,
+    getValues,
+    formState: { errors },
+  } = useForm<CommentFormValues>({
+    resolver: zodResolver(commentFormSchema),
+    defaultValues: getDefaultValues(parentId),
+  });
+
+  const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    setValue('parentId', parentId ?? undefined);
+  }, [parentId, setValue]);
+
+  useEffect(() => {
+    if (captcha?.id) {
+      setValue('captchaId', captcha.id);
+    }
+  }, [captcha?.id, setValue]);
+
+  const refreshCaptchaChallenge = async (): Promise<void> => {
+    const { data } = await refetchCaptcha();
+
+    if (data?.id) {
+      setValue('captchaId', data.id);
+    }
+  };
+
+  const handleRefreshCaptcha = async (): Promise<void> => {
+    setValue('captchaValue', '');
+    await refreshCaptchaChallenge();
+  };
+
+  const handleSubmissionError = (submissionError: unknown): void => {
+    const fieldError = parseFieldValidationError(submissionError);
+
+    if (fieldError) {
+      setError(fieldError.formField, {
+        type: 'server',
+        message: fieldError.message,
+      });
+      resetMutation();
+
+      if (fieldError.formField === 'captchaValue') {
+        setValue('captchaValue', '');
+        void refreshCaptchaChallenge();
+      }
+
+      return;
+    }
+  };
+
+  const onSubmit = (values: CommentFormValues): void => {
+    const formData = new FormData();
+
+    formData.append('userName', values.userName);
+    formData.append('email', values.email);
+    formData.append('captchaId', values.captchaId);
+    formData.append('captchaAnswer', values.captchaValue);
+    formData.append('text', values.text);
+
+    if (values.homePage && values.homePage.length > 0) {
+      formData.append('homePage', values.homePage);
+    }
+
+    if (values.parentId !== undefined) {
+      formData.append('parentId', String(values.parentId));
+    }
+
+    if (values.file) {
+      formData.append('file', values.file);
+    }
+
+    mutate(formData, {
+      onSuccess: async () => {
+        reset(getDefaultValues(parentId));
+        setValue('captchaValue', '');
+        await refreshCaptchaChallenge();
+        onSuccess?.();
+      },
+      onError: handleSubmissionError,
+    });
+  };
+
+  const handleInsertHtmlTag = (tag: CommentHtmlTag): void => {
+    const textarea = textAreaRef.current;
+
+    if (textarea === null) {
+      return;
+    }
+
+    const currentValue = getValues('text');
+    const { value, selectionStart, selectionEnd } = insertHtmlTag(
+      currentValue,
+      textarea.selectionStart,
+      textarea.selectionEnd,
+      tag,
+    );
+
+    setValue('text', value, { shouldDirty: true, shouldValidate: true });
+
+    requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(selectionStart, selectionEnd);
+    });
+  };
+
+  const isCaptchaBusy = isCaptchaLoading || isCaptchaFetching;
+  const captchaErrorMessage =
+    captchaError instanceof Error
+      ? captchaError.message
+      : 'Failed to load captcha. Please try again.';
+  const showGlobalError = isError && parseFieldValidationError(error) === null;
+
+  const isExpanded = isReply || !isFolded;
+
+  return (
+    <motion.form
+      variants={boxVariants}
+      initial="initial"
+      animate="animate"
+      onSubmit={handleSubmit(onSubmit)}
+      className="space-y-2.5 rounded-lg border border-border p-3"
+      noValidate
+    >
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-medium text-muted-foreground">
+          {isReply ? 'Write a reply' : 'Post a comment'}
+        </p>
+        {!isReply ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 shrink-0 text-muted-foreground"
+            aria-expanded={isExpanded}
+            aria-label={
+              isFolded ? 'Expand comment form' : 'Collapse comment form'
+            }
+            onClick={() => {
+              setIsFolded((folded) => !folded);
+            }}
+          >
+            {isFolded ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronUp className="h-4 w-4" />
+            )}
+          </Button>
+        ) : null}
+      </div>
+
+      {isExpanded ? (
+        <>
+          {showGlobalError ? (
+            <p className="rounded-md bg-red-50 px-2.5 py-1.5 text-xs text-red-700">
+              {error instanceof Error
+                ? error.message
+                : 'Failed to submit comment. Please try again.'}
+            </p>
+          ) : null}
+
+          <div
+            className={cn(
+              'grid gap-2.5',
+              isReply ? 'grid-cols-1' : 'sm:grid-cols-2',
+            )}
+          >
+            <div className="space-y-1">
+              <FieldLabel htmlFor="userName" required>
+                Username
+              </FieldLabel>
+              <Input
+                id="userName"
+                autoComplete="username"
+                disabled={isPending}
+                className="h-8 text-sm"
+                {...register('userName')}
+              />
+              <FieldError message={errors.userName?.message} />
+            </div>
+
+            <div className="space-y-1">
+              <FieldLabel htmlFor="email" required>
+                Email
+              </FieldLabel>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                disabled={isPending}
+                className="h-8 text-sm"
+                {...register('email')}
+              />
+              <FieldError message={errors.email?.message} />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <FieldLabel htmlFor="homePage">Homepage</FieldLabel>
+            <Input
+              id="homePage"
+              type="url"
+              placeholder="https://example.com"
+              disabled={isPending}
+              className="h-8 text-sm"
+              {...register('homePage')}
+            />
+            <FieldError message={errors.homePage?.message} />
+          </div>
+
+          <div className="space-y-1">
+            <FieldLabel htmlFor="text" required>
+              Comment
+            </FieldLabel>
+            <CommentHtmlToolbar
+              compact
+              disabled={isPending}
+              onInsertTag={handleInsertHtmlTag}
+            />
+            <Controller
+              name="text"
+              control={control}
+              render={({ field: { onChange, onBlur, value, ref } }) => (
+                <Textarea
+                  id="text"
+                  placeholder="Write your comment..."
+                  disabled={isPending}
+                  value={value}
+                  onBlur={onBlur}
+                  onChange={onChange}
+                  ref={(element: HTMLTextAreaElement | null) => {
+                    ref(element);
+                    textAreaRef.current = element;
+                  }}
+                  className={cn(
+                    'rounded-t-none text-sm',
+                    isReply ? 'min-h-[64px]' : 'min-h-[72px]',
+                  )}
+                />
+              )}
+            />
+            <p className="text-[11px] leading-tight text-muted-foreground">
+              Allowed tags: &lt;a&gt;, &lt;code&gt;, &lt;i&gt;, &lt;strong&gt;
+            </p>
+            <FieldError message={errors.text?.message} />
+          </div>
+
+          <div className="space-y-1">
+            <FieldLabel htmlFor="file">Attachment</FieldLabel>
+            <Controller
+              name="file"
+              control={control}
+              render={({ field: { onChange, ref, name, onBlur } }) => (
+                <Input
+                  id="file"
+                  name={name}
+                  ref={ref}
+                  type="file"
+                  accept=".jpg,.jpeg,.gif,.png,.txt"
+                  disabled={isPending}
+                  className="h-8 text-xs"
+                  onBlur={onBlur}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    onChange(file ?? undefined);
+                  }}
+                />
+              )}
+            />
+            <p className="text-[11px] leading-tight text-muted-foreground">
+              JPG, JPEG, GIF, PNG, or TXT (max 100 KB for TXT)
+            </p>
+            <FieldError message={errors.file?.message} />
+          </div>
+
+          <input type="hidden" {...register('captchaId')} />
+
+          <div className="space-y-1">
+            <FieldLabel htmlFor="captchaValue" required>
+              Captcha
+            </FieldLabel>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex shrink-0 items-center gap-1">
+                {isCaptchaError ? (
+                  <div
+                    aria-hidden
+                    className="flex h-10 w-28 items-center justify-center rounded-md border border-dashed border-red-200 bg-red-50 text-[10px] text-red-500"
+                  >
+                    Load failed
+                  </div>
+                ) : isCaptchaBusy || !captcha?.image ? (
+                  <div
+                    aria-hidden
+                    className="h-10 w-28 animate-pulse rounded-md border border-dashed border-border bg-muted"
+                  />
+                ) : (
+                  <CaptchaImage image={captcha.image} compact />
+                )}
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-muted-foreground"
+                  aria-label="Refresh captcha"
+                  disabled={isPending || isCaptchaBusy}
+                  onClick={() => {
+                    void handleRefreshCaptcha();
+                  }}
+                >
+                  <RefreshCw
+                    className={cn(
+                      'h-3.5 w-3.5',
+                      isCaptchaBusy && 'animate-spin',
+                    )}
+                  />
+                </Button>
+              </div>
+
+              <div className="min-w-0 flex-1 space-y-1">
+                <Input
+                  id="captchaValue"
+                  placeholder="Enter captcha"
+                  autoComplete="off"
+                  disabled={isPending || isCaptchaLoading || isCaptchaError}
+                  className="h-8 text-sm"
+                  {...register('captchaValue')}
+                />
+                <FieldError
+                  message={
+                    errors.captchaValue?.message ??
+                    (isCaptchaError ? captchaErrorMessage : undefined)
+                  }
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-0.5">
+            <Button
+              type="submit"
+              size="sm"
+              disabled={isPending || isCaptchaLoading || isCaptchaError}
+            >
+              {isPending
+                ? 'Submitting...'
+                : isReply
+                  ? 'Post reply'
+                  : 'Post comment'}
+            </Button>
+          </div>
+        </>
+      ) : null}
+    </motion.form>
+  );
+};

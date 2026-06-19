@@ -1,0 +1,11 @@
+---
+description: Guidelines for managing local client-only state using Zustand
+globs: "frontend/src/store/**/*.ts"
+alwaysApply: false
+---
+
+# Zustand Global Client State Rules
+
+- **Scope**: Use Zustand strictly for global **client-only** state (e.g., current theme, UI sidebar open/closed state, temporary draft data). Never store server/API data here.
+- **Atomic Selectors**: Always use atomic selectors when consuming data from the store in components to prevent unnecessary re-renders: `const value = useStore((state) => state.value)`.
+- **Immutability**: Never mutate the state directly inside actions. Use the `set` function correctly, ensuring nested objects are shallow-copied or use Immer if configured.

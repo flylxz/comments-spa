@@ -1,4 +1,6 @@
 import sanitizeHtml from 'sanitize-html';
+import { FieldValidationError } from '../errors/fieldValidationError.js';
+import { validateCommentHtml } from '../lib/validateCommentHtml.js';
 import * as commentRepository from '../repositories/commentRepository.js';
 import type {
   Comment,
@@ -31,6 +33,12 @@ export const createComment = async (
     captchaId: input.captchaId,
     captchaAnswer: input.captchaAnswer,
   });
+
+  const htmlValidationError = validateCommentHtml(input.text);
+
+  if (htmlValidationError !== null) {
+    throw new FieldValidationError('text', htmlValidationError);
+  }
 
   return commentRepository.createCommentRecord({
     userName: input.userName,

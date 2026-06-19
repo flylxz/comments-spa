@@ -1,0 +1,13 @@
+---
+description: Strict TypeScript type safety and terminology rules
+globs: "frontend/src/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# TypeScript Guidelines
+
+- **Strict Typing**: Type safety is non-negotiable. Never use `any`. Use `unknown` if the type is genuinely unpredictable.
+- **Terminology**: When explaining technical terms in Russian, always append the original English name in parentheses, e.g., "Деструктуризация (Destructuring)" or "Дженерик (Generic)".
+- **Data Structures**: Prefer literal types or `as const` objects over TypeScript `enums`.
+- **Props Typing**: Always explicitly type component props using `interface` or `type`. Do not rely on implicit type inference for external APIs.
+- **Discriminated Unions**: Use discriminated unions for handling complex, mutually exclusive states (e.g., API response states).
