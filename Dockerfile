@@ -22,6 +22,8 @@ WORKDIR /app
 COPY package.json bun.lock ./
 COPY backend/package.json ./backend/
 COPY frontend/package.json ./frontend/
+COPY backend/prisma ./backend/prisma
+COPY backend/prisma.config.ts ./backend/
 
 RUN bun install --frozen-lockfile --production --filter comments-spa-backend
 
@@ -32,6 +34,8 @@ WORKDIR /app
 COPY package.json bun.lock ./
 COPY backend/package.json ./backend/
 COPY frontend/package.json ./frontend/
+COPY backend/prisma ./backend/prisma
+COPY backend/prisma.config.ts ./backend/
 
 RUN bun install --frozen-lockfile --filter comments-spa-backend
 
@@ -55,6 +59,7 @@ COPY --from=backend-deps /app/node_modules /app/node_modules
 COPY --from=backend-deps /app/backend/node_modules ./node_modules
 COPY --from=backend-build /app/backend/dist ./dist
 COPY --from=backend-build /app/backend/prisma ./prisma
+COPY --from=backend-build /app/backend/prisma.config.ts ./prisma.config.ts
 COPY --from=backend-build /app/backend/src/generated ./src/generated
 COPY --from=frontend-build /app/frontend/dist /usr/share/nginx/html
 
