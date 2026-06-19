@@ -265,32 +265,32 @@ export const CommentForm = ({
       className="space-y-2.5 rounded-lg border border-border p-3"
       noValidate
     >
-      <div className="flex items-center justify-between gap-2">
+      {!isReply ? (
+        <button
+          type="button"
+          className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-md py-0.5 text-left transition-colors hover:bg-muted/50"
+          aria-expanded={isExpanded}
+          aria-label={
+            isFolded ? 'Expand comment form' : 'Collapse comment form'
+          }
+          onClick={() => {
+            setIsFolded((folded) => !folded);
+          }}
+        >
+          <span className="text-xs font-medium text-muted-foreground">
+            Post a comment
+          </span>
+          {isFolded ? (
+            <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+          ) : (
+            <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" />
+          )}
+        </button>
+      ) : (
         <p className="text-xs font-medium text-muted-foreground">
-          {isReply ? 'Write a reply' : 'Post a comment'}
+          Write a reply
         </p>
-        {!isReply ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 shrink-0 text-muted-foreground"
-            aria-expanded={isExpanded}
-            aria-label={
-              isFolded ? 'Expand comment form' : 'Collapse comment form'
-            }
-            onClick={() => {
-              setIsFolded((folded) => !folded);
-            }}
-          >
-            {isFolded ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronUp className="h-4 w-4" />
-            )}
-          </Button>
-        ) : null}
-      </div>
+      )}
 
       {isExpanded ? (
         <>
@@ -479,9 +479,10 @@ export const CommentForm = ({
             </div>
           </div>
 
-          <div className="flex justify-end pt-0.5">
+          <div className="-mx-3 -mb-3 flex justify-end rounded-b-lg border-t border-border bg-muted/30 px-3 py-2">
             <Button
               type="submit"
+              variant="outline"
               size="sm"
               disabled={isPending || isCaptchaLoading || isCaptchaError}
             >

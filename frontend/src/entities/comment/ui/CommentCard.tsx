@@ -116,7 +116,7 @@ export const CommentCard = ({ comment, onReplyClick }: CommentCardProps) => {
 
       <div
         className="mt-4 whitespace-pre-line text-sm leading-relaxed text-foreground [&_a]:text-primary [&_a]:underline [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_p+p]:mt-2"
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is sanitized with DOMPurify before rendering
         dangerouslySetInnerHTML={{ __html: sanitizeCommentHtml(comment.text) }}
       />
 
