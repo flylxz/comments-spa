@@ -1,0 +1,15 @@
+node_modules
+**/node_modules
+.git
+.cursor
+.husky
+dist
+frontend/dist
+backend/dist
+backend/uploads
+*.md
+.env
+.env.*
+!.env.example
+!frontend/.env.example
+!backend/.env.example
