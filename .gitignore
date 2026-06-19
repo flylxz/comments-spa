@@ -1,6 +1,5 @@
 # Dependencies
 **/node_modules/
-**/package-lock.json
 **/yarn.lock
 **/pnpm-lock.yaml
 
@@ -26,13 +25,15 @@
 **/logs/
 **/*.log
 **/npm-debug.log*
+**/bun-debug.log*
 **/.pids/
 **/*.pid
 **/*.seed
 **/*.pid.lock
 
 # IDE and system files
-.vscode/
+.vscode/*
+!.vscode/settings.json
 .idea/
 .DS_Store
 Thumbs.db
