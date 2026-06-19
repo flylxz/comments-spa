@@ -2,6 +2,10 @@ import { FileText, ZoomIn } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import {
+  fetchCommentAttachmentSize,
+  getCachedCommentAttachmentSize,
+} from '@/entities/comment/lib/fetchCommentAttachmentSize';
+import {
   formatCommentAttachmentSize,
   getCommentAttachmentFileName,
   getCommentAttachmentFormat,
@@ -26,40 +30,35 @@ export const CommentAttachment = ({
   const resolvedUrl = resolveCommentFileUrl(fileUrl);
   const fileName = getCommentAttachmentFileName(fileUrl);
   const fileFormat = getCommentAttachmentFormat(fileUrl);
-  const [fileSize, setFileSize] = useState<number | null>(null);
+  const [fileSize, setFileSize] = useState<number | null>(() => {
+    const cached = getCachedCommentAttachmentSize(resolvedUrl);
+
+    return cached === undefined ? null : cached;
+  });
 
   useEffect(() => {
     if (isCommentImageAttachment(fileUrl)) {
       return;
     }
 
+    const cached = getCachedCommentAttachmentSize(resolvedUrl);
+
+    if (cached !== undefined) {
+      setFileSize(cached);
+      return;
+    }
+
     let cancelled = false;
 
-    const fetchFileSize = async (): Promise<void> => {
-      try {
-        const response = await fetch(resolvedUrl, { method: 'HEAD' });
+    const loadFileSize = async (): Promise<void> => {
+      const bytes = await fetchCommentAttachmentSize(resolvedUrl);
 
-        if (!response.ok) {
-          return;
-        }
-
-        const contentLength = response.headers.get('Content-Length');
-
-        if (!contentLength) {
-          return;
-        }
-
-        const bytes = Number.parseInt(contentLength, 10);
-
-        if (!cancelled && Number.isFinite(bytes)) {
-          setFileSize(bytes);
-        }
-      } catch {
-        // Size is optional metadata; ignore network errors.
+      if (!cancelled) {
+        setFileSize(bytes);
       }
     };
 
-    void fetchFileSize();
+    void loadFileSize();
 
     return () => {
       cancelled = true;
