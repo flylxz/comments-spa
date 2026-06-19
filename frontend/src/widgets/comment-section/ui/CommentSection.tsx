@@ -1,8 +1,7 @@
 import { motion, type Variants } from 'motion/react';
 import { useState } from 'react';
 
-import type { GetCommentsParams, SortField } from '@/entities/comment';
-import { getNextSortParams } from '@/entities/comment';
+import type { GetCommentsParams } from '@/entities/comment';
 import { CommentForm } from '@/features/manage-comments';
 
 import { CommentsListRegion } from './CommentsListRegion';
@@ -21,10 +20,6 @@ export const CommentSection = () => {
   const [replyingToCommentId, setReplyingToCommentId] = useState<number | null>(
     null,
   );
-
-  const handleSortChange = (field: SortField): void => {
-    setQueryParams((current) => getNextSortParams(current, field));
-  };
 
   const handleReplyClick = (commentId: number): void => {
     setReplyingToCommentId((current) =>
@@ -46,7 +41,7 @@ export const CommentSection = () => {
       <CommentForm parentId={null} />
       <CommentsListRegion
         queryParams={queryParams}
-        onSortChange={handleSortChange}
+        setQueryParams={setQueryParams}
         replyingToCommentId={replyingToCommentId}
         onReplyClick={handleReplyClick}
         onReplyClose={handleReplyClose}

@@ -9,12 +9,14 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+        outline:
+          'border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground',
         ghost: 'hover:bg-foreground/12 hover:text-foreground',
         link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {
         default: 'h-9 px-4 py-2',
-        sm: 'h-8 rounded-md px-3 text-xs',
+        sm: 'h-8 rounded-md px-3 text-sm',
         icon: 'h-8 w-8',
       },
     },
@@ -37,7 +39,7 @@ export const Button = ({
 }: ButtonProps) => (
   <button
     type={type}
-    className={cn(buttonVariants({ variant, size, className }))}
+    className={cn(buttonVariants({ variant, size }), className)}
     {...props}
   />
 );

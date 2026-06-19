@@ -1,9 +1,17 @@
-import type { ReactNode } from 'react';
+import {
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
+  useEffect,
+  useRef,
+} from 'react';
 
 import type { Comment, GetCommentsParams, SortField } from '@/entities/comment';
 import {
+  CommentPagination,
   CommentSortControls,
   CommentTree,
+  getNextSortParams,
   normalizeCommentTree,
   useCommentsQuery,
 } from '@/entities/comment';
@@ -12,7 +20,7 @@ import { cn } from '@/shared/lib/utils';
 
 export type CommentsListRegionProps = {
   queryParams: GetCommentsParams;
-  onSortChange: (field: SortField) => void;
+  setQueryParams: Dispatch<SetStateAction<GetCommentsParams>>;
   replyingToCommentId: number | null;
   onReplyClick: (commentId: number) => void;
   onReplyClose: () => void;
@@ -20,22 +28,45 @@ export type CommentsListRegionProps = {
 
 export const CommentsListRegion = ({
   queryParams,
-  onSortChange,
+  setQueryParams,
   replyingToCommentId,
   onReplyClick,
   onReplyClose,
 }: CommentsListRegionProps) => {
+  const handleSortChange = (field: SortField): void => {
+    setQueryParams((current) => getNextSortParams(current, field));
+  };
+
+  const handlePageChange = (page: number): void => {
+    setQueryParams((current) => ({ ...current, page }));
+  };
+
+  const listRef = useRef<HTMLDivElement>(null);
+  const previousPageRef = useRef(queryParams.page);
   const { data, isLoading, isFetching, isError, error } =
     useCommentsQuery(queryParams);
 
   const isInitialLoading = isLoading && !data;
 
+  useEffect(() => {
+    if (previousPageRef.current === queryParams.page) {
+      return;
+    }
+
+    previousPageRef.current = queryParams.page;
+    listRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [queryParams.page]);
+
   return (
-    <div className="flex flex-col gap-4">
+    <div
+      ref={listRef}
+      id="comments-list-region"
+      className="flex flex-col gap-4 scroll-mt-6"
+    >
       <CommentSortControls
         sortBy={queryParams.sortBy}
         sortOrder={queryParams.sortOrder}
-        onSortChange={onSortChange}
+        onSortChange={handleSortChange}
         isFetching={isFetching}
       />
 
@@ -59,13 +90,35 @@ export const CommentsListRegion = ({
       ) : null}
 
       {!isInitialLoading && !isError && data ? (
-        <CommentsListContent
-          data={data.data}
-          isFetching={isFetching}
-          replyingToCommentId={replyingToCommentId}
-          onReplyClick={onReplyClick}
-          onReplyClose={onReplyClose}
-        />
+        <>
+          <CommentPagination
+            page={data.pagination.page}
+            totalPages={data.pagination.totalPages}
+            total={data.pagination.total}
+            pageSize={data.pagination.pageSize}
+            onPageChange={handlePageChange}
+            isFetching={isFetching}
+          />
+
+          <CommentsListContent
+            data={data.data}
+            isFetching={isFetching}
+            replyingToCommentId={replyingToCommentId}
+            onReplyClick={onReplyClick}
+            onReplyClose={onReplyClose}
+          />
+
+          {data.pagination.totalPages > 1 ? (
+            <CommentPagination
+              page={data.pagination.page}
+              totalPages={data.pagination.totalPages}
+              total={data.pagination.total}
+              pageSize={data.pagination.pageSize}
+              onPageChange={handlePageChange}
+              isFetching={isFetching}
+            />
+          ) : null}
+        </>
       ) : null}
     </div>
   );
