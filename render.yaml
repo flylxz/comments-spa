@@ -15,7 +15,6 @@ services:
     plan: free
     region: frankfurt
     healthCheckPath: /health
-    preDeployCommand: bunx prisma migrate deploy
     envVars:
       - key: DATABASE_URL
         fromDatabase:
