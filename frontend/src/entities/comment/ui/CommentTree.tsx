@@ -1,3 +1,4 @@
+import { AnimatePresence, motion, type Variants } from 'motion/react';
 import type { ReactNode } from 'react';
 
 import type { Comment } from '@/entities/comment/model/types';
@@ -13,6 +14,21 @@ export type CommentTreeProps = {
   depth?: number;
 };
 
+const treeVariants: Variants = {
+  initial: {},
+  animate: {
+    transition: {
+      staggerChildren: 0.08,
+    },
+  },
+};
+
+const replyFormVariants: Variants = {
+  initial: { opacity: 0, y: -12 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -12 },
+};
+
 export const CommentTree = ({
   comments,
   onReplyClick,
@@ -20,14 +36,29 @@ export const CommentTree = ({
   renderReplyForm,
   depth = 0,
 }: CommentTreeProps) => (
-  <div className="flex flex-col gap-4">
+  <motion.div
+    className="flex flex-col gap-4"
+    variants={treeVariants}
+    initial="initial"
+    animate="animate"
+  >
     {comments.map((comment) => (
       <div key={comment.id} className="flex flex-col gap-4">
         <CommentCard comment={comment} onReplyClick={onReplyClick} />
 
-        {replyingToCommentId === comment.id && renderReplyForm
-          ? renderReplyForm(comment.id)
-          : null}
+        <AnimatePresence initial={false}>
+          {replyingToCommentId === comment.id && renderReplyForm ? (
+            <motion.div
+              key={`reply-form-${comment.id}`}
+              variants={replyFormVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+            >
+              {renderReplyForm(comment.id)}
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
 
         {comment.replies && comment.replies.length > 0 ? (
           <div
@@ -47,5 +78,5 @@ export const CommentTree = ({
         ) : null}
       </div>
     ))}
-  </div>
+  </motion.div>
 );

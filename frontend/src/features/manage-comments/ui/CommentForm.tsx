@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import DOMPurify from 'dompurify';
 import { ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
+import { motion, type Variants } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
@@ -105,6 +106,11 @@ const FieldLabel = ({
     {required ? <span className="text-red-500"> *</span> : null}
   </label>
 );
+
+const boxVariants: Variants = {
+  initial: { opacity: 0, y: -20 },
+  animate: { opacity: 1, y: 0 },
+};
 
 export const CommentForm = ({
   parentId = null,
@@ -251,7 +257,10 @@ export const CommentForm = ({
   const isExpanded = isReply || !isFolded;
 
   return (
-    <form
+    <motion.form
+      variants={boxVariants}
+      initial="initial"
+      animate="animate"
       onSubmit={handleSubmit(onSubmit)}
       className="space-y-2.5 rounded-lg border border-border p-3"
       noValidate
@@ -265,7 +274,7 @@ export const CommentForm = ({
             type="button"
             variant="ghost"
             size="icon"
-            className="h-7 w-7 shrink-0 text-muted-foreground hover:bg-accent hover:text-foreground"
+            className="h-7 w-7 shrink-0 text-muted-foreground"
             aria-expanded={isExpanded}
             aria-label={
               isFolded ? 'Expand comment form' : 'Collapse comment form'
@@ -435,7 +444,7 @@ export const CommentForm = ({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 text-muted-foreground hover:bg-accent hover:text-foreground"
+                  className="h-7 w-7 text-muted-foreground"
                   aria-label="Refresh captcha"
                   disabled={isPending || isCaptchaBusy}
                   onClick={() => {
@@ -485,6 +494,6 @@ export const CommentForm = ({
           </div>
         </>
       ) : null}
-    </form>
+    </motion.form>
   );
 };

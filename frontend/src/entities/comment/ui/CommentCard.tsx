@@ -6,6 +6,7 @@ import {
   CornerUpLeft,
   Hash,
 } from 'lucide-react';
+import { motion, type Variants } from 'motion/react';
 
 import { sanitizeCommentHtml } from '@/entities/comment/lib/sanitizeCommentHtml';
 import type { Comment } from '@/entities/comment/model/types';
@@ -40,13 +41,19 @@ const formatCreatedAt = (createdAt: string): string => {
   return format(date, 'dd MMM yyyy, HH:mm');
 };
 
+const cardVariants: Variants = {
+  initial: { opacity: 0, y: -20 },
+  animate: { opacity: 1, y: 0 },
+};
+
 export const CommentCard = ({ comment, onReplyClick }: CommentCardProps) => {
   const handleReplyClick = (): void => {
     onReplyClick?.(comment.id);
   };
 
   return (
-    <article
+    <motion.article
+      variants={cardVariants}
       id={`comment-${comment.id}`}
       className="rounded-lg border border-border bg-card p-4 text-card-foreground shadow-sm"
     >
@@ -76,7 +83,7 @@ export const CommentCard = ({ comment, onReplyClick }: CommentCardProps) => {
         <div className="flex shrink-0 items-center gap-1">
           <a
             href={`#comment-${comment.id}`}
-            className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-background/80 hover:text-foreground"
             aria-label="Permalink"
           >
             <Hash className="h-4 w-4" />
@@ -85,7 +92,7 @@ export const CommentCard = ({ comment, onReplyClick }: CommentCardProps) => {
           <Button
             variant="ghost"
             size="icon"
-            className="text-muted-foreground hover:bg-accent hover:text-foreground"
+            className="text-muted-foreground hover:bg-background/80"
             aria-label="Bookmark"
           >
             <Bookmark className="h-4 w-4" />
@@ -95,7 +102,7 @@ export const CommentCard = ({ comment, onReplyClick }: CommentCardProps) => {
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 rounded-none text-muted-foreground hover:bg-accent hover:text-foreground"
+              className="h-8 w-8 rounded-none text-muted-foreground hover:bg-background/80"
               aria-label="Upvote"
             >
               <ChevronUp className="h-4 w-4" />
@@ -108,7 +115,7 @@ export const CommentCard = ({ comment, onReplyClick }: CommentCardProps) => {
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 rounded-none text-muted-foreground hover:bg-accent hover:text-foreground"
+              className="h-8 w-8 rounded-none text-muted-foreground hover:bg-background/80"
               aria-label="Downvote"
             >
               <ChevronDown className="h-4 w-4" />
@@ -131,13 +138,13 @@ export const CommentCard = ({ comment, onReplyClick }: CommentCardProps) => {
         <Button
           variant="ghost"
           size="sm"
-          className="h-auto gap-1.5 px-1 -ml-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+          className="h-auto gap-1.5 px-1 -ml-1 text-muted-foreground"
           onClick={handleReplyClick}
         >
           <CornerUpLeft className="h-4 w-4" />
           Reply
         </Button>
       </footer>
-    </article>
+    </motion.article>
   );
 };

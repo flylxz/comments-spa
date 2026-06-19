@@ -104,7 +104,7 @@ export const CommentAttachment = ({
       <a
         href={resolvedUrl}
         download={fileName}
-        className="inline-flex max-w-full items-center gap-3 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm text-primary transition-colors hover:bg-muted/50"
+        className="inline-flex max-w-full items-center gap-3 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm text-primary transition-colors hover:border-foreground/20 hover:bg-foreground/12"
       >
         <FileText className="h-4 w-4 shrink-0" aria-hidden />
         <span className="min-w-0 text-left">

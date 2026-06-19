@@ -1,3 +1,4 @@
+import { motion, type Variants } from 'motion/react';
 import { useState } from 'react';
 
 import type { GetCommentsParams } from '@/entities/comment';
@@ -13,6 +14,11 @@ const DEFAULT_QUERY_PARAMS = {
   sortBy: 'createdAt',
   sortOrder: 'desc',
 } satisfies GetCommentsParams;
+
+const sectionVariants: Variants = {
+  initial: { opacity: 0, y: -20 },
+  animate: { opacity: 1, y: 0 },
+};
 
 export const CommentSection = () => {
   const [replyingToCommentId, setReplyingToCommentId] = useState<number | null>(
@@ -33,17 +39,27 @@ export const CommentSection = () => {
 
   if (isLoading) {
     return (
-      <section className="flex flex-col gap-6">
+      <motion.section
+        variants={sectionVariants}
+        initial="initial"
+        animate="animate"
+        className="flex flex-col gap-6"
+      >
         <div className="flex min-h-48 items-center justify-center rounded-lg border border-dashed border-border bg-muted">
           <p className="text-sm text-muted-foreground">Loading comments...</p>
         </div>
-      </section>
+      </motion.section>
     );
   }
 
   if (isError) {
     return (
-      <section className="flex flex-col gap-6">
+      <motion.section
+        variants={sectionVariants}
+        initial="initial"
+        animate="animate"
+        className="flex flex-col gap-6"
+      >
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/40">
           <p className="text-sm font-medium text-red-700 dark:text-red-400">
             Failed to load comments
@@ -54,7 +70,7 @@ export const CommentSection = () => {
             </p>
           ) : null}
         </div>
-      </section>
+      </motion.section>
     );
   }
 
@@ -63,7 +79,12 @@ export const CommentSection = () => {
   }
 
   return (
-    <section className="flex flex-col gap-8">
+    <motion.section
+      variants={sectionVariants}
+      initial="initial"
+      animate="animate"
+      className="flex flex-col gap-8"
+    >
       <CommentForm parentId={null} />
       <CommentTree
         comments={normalizeCommentTree(data.data)}
@@ -73,6 +94,6 @@ export const CommentSection = () => {
           <CommentForm parentId={commentId} onSuccess={handleReplyClose} />
         )}
       />
-    </section>
+    </motion.section>
   );
 };
