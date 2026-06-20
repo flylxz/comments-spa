@@ -1,5 +1,6 @@
 import sanitizeHtml from 'sanitize-html';
 import { FieldValidationError } from '../errors/fieldValidationError.js';
+import { isExternalHttpLinkHref } from '../lib/isAllowedLinkHref.js';
 import { validateCommentHtml } from '../lib/validateCommentHtml.js';
 import {
   type CommentRepository,
@@ -19,9 +20,29 @@ const sanitizeCommentText = (text: string): string =>
   sanitizeHtml(text, {
     allowedTags: [...ALLOWED_TAGS],
     allowedAttributes: {
-      a: ['href', 'title'],
+      a: ['href', 'title', 'target', 'rel'],
     },
+    allowedSchemes: ['http', 'https', 'mailto'],
+    allowedSchemesAppliedToAttributes: ['href'],
     disallowedTagsMode: 'discard',
+    transformTags: {
+      a: (tagName, attribs) => {
+        const href = attribs.href ?? '';
+
+        if (!isExternalHttpLinkHref(href)) {
+          return { tagName, attribs };
+        }
+
+        return {
+          tagName,
+          attribs: {
+            ...attribs,
+            target: '_blank',
+            rel: 'noopener noreferrer',
+          },
+        };
+      },
+    },
   });
 
 export class CommentService {

@@ -6,12 +6,15 @@ import 'dotenv/config';
 import { createServer } from 'node:http';
 
 import express from 'express';
+import helmet from 'helmet';
 
 import { errorHandler } from './middlewares/errorHandler.js';
 import routes from './routes/index.js';
 import { initWebSocket } from './services/websocketService.js';
 
 const app = express();
+// One reverse proxy (nginx) in Docker — required for correct req.ip in rate limiters
+app.set('trust proxy', 1);
 const httpServer = createServer(app);
 const PORT = Number(process.env.PORT) || 3000;
 const uploadsPath = path.join(
@@ -19,6 +22,7 @@ const uploadsPath = path.join(
   '../uploads',
 );
 
+app.use(helmet());
 app.use(express.json());
 app.use('/uploads', express.static(uploadsPath));
 

@@ -10,8 +10,11 @@ import sharp from 'sharp';
 import { FieldValidationError } from '../errors/fieldValidationError.js';
 
 const MAX_TXT_SIZE_BYTES = 100 * 1024;
+const MAX_UPLOAD_SIZE_BYTES = 5 * 1024 * 1024;
 const MAX_IMAGE_WIDTH = 320;
 const MAX_IMAGE_HEIGHT = 240;
+
+const ALLOWED_IMAGE_FORMATS = new Set(['jpeg', 'png', 'gif']);
 
 const ALLOWED_MIME_TYPES = new Set([
   'image/jpeg',
@@ -26,6 +29,11 @@ const UPLOADS_DIR = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
   '../../uploads',
 );
+
+const MULTER_ERROR_MESSAGES: Partial<Record<MulterError['code'], string>> = {
+  LIMIT_FILE_SIZE: 'File size must not exceed 5 MB',
+  LIMIT_UNEXPECTED_FILE: 'Unexpected file field. Use "file" field name',
+};
 
 const memoryStorage = multer.memoryStorage();
 
@@ -51,6 +59,9 @@ const fileFilter: multer.Options['fileFilter'] = (_req, file, callback) => {
 const upload = multer({
   storage: memoryStorage,
   fileFilter,
+  limits: {
+    fileSize: MAX_UPLOAD_SIZE_BYTES,
+  },
 }).single('file');
 
 export const handleUpload = (
@@ -63,9 +74,7 @@ export const handleUpload = (
       next(
         new FieldValidationError(
           'file',
-          error.code === 'LIMIT_UNEXPECTED_FILE'
-            ? 'Unexpected file field. Use "file" field name'
-            : error.message,
+          MULTER_ERROR_MESSAGES[error.code] ?? error.message,
         ),
       );
       return;
@@ -111,8 +120,23 @@ const saveImageFile = async (
   buffer: Buffer,
   extension: string,
 ): Promise<string> => {
-  const image = sharp(buffer);
-  const metadata = await image.metadata();
+  let image: ReturnType<typeof sharp>;
+  let metadata: Awaited<ReturnType<ReturnType<typeof sharp>['metadata']>>;
+
+  try {
+    image = sharp(buffer);
+    metadata = await image.metadata();
+  } catch {
+    throw new FieldValidationError('file', 'Invalid image file');
+  }
+
+  if (
+    metadata.format === undefined ||
+    !ALLOWED_IMAGE_FORMATS.has(metadata.format)
+  ) {
+    throw new FieldValidationError('file', 'Invalid image file');
+  }
+
   const width = metadata.width ?? 0;
   const height = metadata.height ?? 0;
   const filename = buildUniqueFilename(extension);

@@ -3,6 +3,7 @@ import { ZodError } from 'zod';
 
 import { FieldValidationError } from '../errors/fieldValidationError.js';
 import { Prisma } from '../generated/prisma/client.js';
+import { isProduction } from '../lib/env.js';
 
 export interface AppError extends Error {
   statusCode?: number;
@@ -55,11 +56,21 @@ export const errorHandler = (
     const appError = error as AppError;
     const statusCode = appError.statusCode ?? 500;
 
-    res.status(statusCode).json({
-      message: appError.message || 'Internal Server Error',
-    });
+    if (statusCode >= 500) {
+      console.error(error);
+    }
+
+    const message =
+      isProduction() && statusCode >= 500
+        ? 'Internal Server Error'
+        : appError.message || 'Internal Server Error';
+
+    res.status(statusCode).json({ message });
     return;
   }
 
-  res.status(500).json({ message: 'Internal Server Error' });
+  console.error(error);
+  res.status(500).json({
+    message: isProduction() ? 'Internal Server Error' : 'Internal Server Error',
+  });
 };

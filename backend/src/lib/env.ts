@@ -1,3 +1,6 @@
+export const isProduction = (): boolean =>
+  process.env.NODE_ENV === 'production';
+
 export const getJwtSecret = (): string => {
   const jwtSecret = process.env.JWT_SECRET;
 

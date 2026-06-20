@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import svgCaptcha from 'svg-captcha';
 
 import { FieldValidationError } from '../errors/fieldValidationError.js';
+import { CAPTCHA_CHAR_PRESET } from '../lib/captchaValidation.js';
 import { getJwtSecret } from '../lib/env.js';
 import type {
   CaptchaJwtPayload,
@@ -26,7 +27,9 @@ const isCaptchaJwtPayload = (
 
 export class CaptchaService {
   generateCaptcha(): CaptchaResponse {
-    const captcha = svgCaptcha.create();
+    const captcha = svgCaptcha.create({
+      charPreset: CAPTCHA_CHAR_PRESET,
+    });
     const jwtSecret = getJwtSecret();
     const captchaId = jwt.sign({ answer: captcha.text }, jwtSecret, {
       expiresIn: CAPTCHA_TOKEN_EXPIRES_IN,

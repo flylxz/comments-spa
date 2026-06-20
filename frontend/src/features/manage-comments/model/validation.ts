@@ -50,6 +50,8 @@ const isAllowedFile = (file: File): boolean => {
   );
 };
 
+const CAPTCHA_ANSWER_PATTERN = /^[a-zA-Z0-9]+$/;
+
 /** Client-side validation for the comment submission form. */
 export const commentFormSchema = z.object({
   userName: z
@@ -62,7 +64,13 @@ export const commentFormSchema = z.object({
     .email('Email must be a valid email address'),
   homePage: z.union([z.literal(''), z.string().url()]).optional(),
   captchaId: z.string().min(1, 'Captcha is required'),
-  captchaValue: z.string().min(1, 'Captcha answer is required'),
+  captchaValue: z
+    .string()
+    .min(1, 'Captcha answer is required')
+    .regex(
+      CAPTCHA_ANSWER_PATTERN,
+      'Captcha answer must contain only letters and numbers',
+    ),
   text: z
     .string()
     .min(1, 'Comment text is required')
