@@ -1,0 +1,108 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+
+vars:
+  DOCKER_IMAGE: comments-spa
+  DOCKER_TAG: local
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  install:
+    desc: Install all workspace dependencies
+    cmds:
+      - bun install --frozen-lockfile
+
+  env:
+    desc: Copy .env.example → .env if missing
+    cmds:
+      - test -f backend/.env || cp backend/.env.example backend/.env
+      - test -f frontend/.env || cp frontend/.env.example frontend/.env
+
+  setup:
+    desc: First-time local setup (env, deps, Postgres, migrations)
+    deps: [env, install]
+    cmds:
+      - task: db:up
+      - task: db:migrate
+
+  dev:
+    desc: Run frontend and backend in parallel
+    deps: [dev:backend, dev:frontend]
+
+  dev:frontend:
+    desc: Vite dev server
+    cmds:
+      - bun run dev:frontend
+
+  dev:backend:
+    desc: Express + Bun watch
+    cmds:
+      - bun run dev:backend
+
+  verify:
+    desc: Lint + typecheck (run after each branch)
+    cmds:
+      - bun run lint
+      - bun run typecheck
+
+  build:
+    desc: Build frontend and backend
+    cmds:
+      - bun run build
+
+  format:
+    desc: Format with Biome
+    cmds:
+      - bun run format
+
+  check:
+    desc: Biome check --write
+    cmds:
+      - bun run check
+
+  db:up:
+    desc: Start local Postgres (docker compose)
+    cmds:
+      - docker compose up -d --wait
+
+  db:down:
+    desc: Stop local Postgres
+    cmds:
+      - docker compose down
+
+  db:reset:
+    desc: Stop Postgres and remove persisted data
+    cmds:
+      - docker compose down -v
+
+  db:migrate:
+    desc: Apply Prisma migrations (dev)
+    dir: backend
+    cmds:
+      - bun run prisma:migrate
+
+  db:generate:
+    desc: Regenerate Prisma client
+    dir: backend
+    cmds:
+      - bun run prisma:generate
+
+  db:seed:
+    desc: Seed database
+    dir: backend
+    cmds:
+      - bunx prisma db seed
+
+  docker:build:
+    desc: Build production Docker image
+    cmds:
+      - docker build -t {{.DOCKER_IMAGE}}:{{.DOCKER_TAG}} .
+
+  docker:run:
+    desc: Run container locally (needs DATABASE_URL)
+    cmds:
+      - docker run --rm -p 10000:10000 --env-file backend/.env {{.DOCKER_IMAGE}}:{{.DOCKER_TAG}}
