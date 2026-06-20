@@ -4,7 +4,6 @@ import { type ReactNode, useState } from 'react';
 
 import { countCommentReplies } from '@/entities/comment/lib/countCommentReplies';
 import type { Comment } from '@/entities/comment/model/types';
-import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/button';
 
 import { CommentCard } from './CommentCard';
@@ -14,10 +13,11 @@ export type CommentTreeProps = {
   onReplyClick?: (commentId: number) => void;
   replyingToCommentId?: number | null;
   renderReplyForm?: (commentId: number) => ReactNode;
-  depth?: number;
+  initialDepth?: number;
 };
 
-type CommentTreeNodeProps = CommentTreeProps & {
+type CommentTreeNodeProps = Omit<CommentTreeProps, 'initialDepth'> & {
+  depth?: number;
   collapsedIds: Set<number>;
   onToggleReplies: (commentId: number) => void;
 };
@@ -36,6 +36,8 @@ const replyFormVariants: Variants = {
   animate: { opacity: 1, y: 0 },
   exit: { opacity: 0, y: -12 },
 };
+
+const DEPTH_INDENT_PX = 24;
 
 const CommentTreeNode = ({
   comments,
@@ -60,7 +62,15 @@ const CommentTreeNode = ({
       const showReplies = hasReplies && comment.replies && !isCollapsed;
 
       return (
-        <div key={comment.id} className="flex flex-col gap-4">
+        <div
+          key={comment.id}
+          className="flex flex-col gap-4"
+          style={
+            depth >= 1
+              ? { marginLeft: `${depth * DEPTH_INDENT_PX}px` }
+              : undefined
+          }
+        >
           <CommentCard comment={comment} onReplyClick={onReplyClick} />
 
           <AnimatePresence initial={false}>
@@ -98,23 +108,15 @@ const CommentTreeNode = ({
           ) : null}
 
           {showReplies ? (
-            <div
-              id={isTopLevel ? `comment-replies-${comment.id}` : undefined}
-              className={cn(
-                'border-l border-border',
-                depth > 5 ? 'pl-0' : 'pl-6',
-              )}
-            >
-              <CommentTreeNode
-                comments={comment.replies || []}
-                onReplyClick={onReplyClick}
-                replyingToCommentId={replyingToCommentId}
-                renderReplyForm={renderReplyForm}
-                depth={depth + 1}
-                collapsedIds={collapsedIds}
-                onToggleReplies={onToggleReplies}
-              />
-            </div>
+            <CommentTreeNode
+              comments={comment.replies || []}
+              onReplyClick={onReplyClick}
+              replyingToCommentId={replyingToCommentId}
+              renderReplyForm={renderReplyForm}
+              depth={depth + 1}
+              collapsedIds={collapsedIds}
+              onToggleReplies={onToggleReplies}
+            />
           ) : null}
         </div>
       );
@@ -127,6 +129,7 @@ export const CommentTree = ({
   onReplyClick,
   replyingToCommentId = null,
   renderReplyForm,
+  initialDepth = 0,
 }: CommentTreeProps) => {
   const [collapsedIds, setCollapsedIds] = useState<Set<number>>(
     () => new Set(),
@@ -152,6 +155,7 @@ export const CommentTree = ({
       onReplyClick={onReplyClick}
       replyingToCommentId={replyingToCommentId}
       renderReplyForm={renderReplyForm}
+      depth={initialDepth}
       collapsedIds={collapsedIds}
       onToggleReplies={handleToggleReplies}
     />

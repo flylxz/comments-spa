@@ -10,8 +10,7 @@ export const getCommentAttachmentFileName = (fileUrl: string): string => {
   }
 };
 
-export const getCommentAttachmentFormat = (fileUrl: string): string => {
-  const fileName = getCommentAttachmentFileName(fileUrl);
+export const getCommentAttachmentFormat = (fileName: string): string => {
   const dotIndex = fileName.lastIndexOf('.');
 
   if (dotIndex < 0) {

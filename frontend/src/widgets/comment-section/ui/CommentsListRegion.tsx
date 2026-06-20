@@ -9,14 +9,12 @@ import {
 import type { Comment, GetCommentsParams, SortField } from '@/entities/comment';
 import {
   CommentPagination,
-  CommentSortControls,
-  CommentTree,
+  CommentsTable,
   getNextSortParams,
   normalizeCommentTree,
   useCommentsQuery,
 } from '@/entities/comment';
 import { CommentForm } from '@/features/manage-comments';
-import { cn } from '@/shared/lib/utils';
 
 export type CommentsListRegionProps = {
   queryParams: GetCommentsParams;
@@ -63,13 +61,6 @@ export const CommentsListRegion = ({
       id="comments-list-region"
       className="flex flex-col gap-4 scroll-mt-6"
     >
-      <CommentSortControls
-        sortBy={queryParams.sortBy}
-        sortOrder={queryParams.sortOrder}
-        onSortChange={handleSortChange}
-        isFetching={isFetching}
-      />
-
       {isInitialLoading ? (
         <div className="flex min-h-48 items-center justify-center rounded-lg border border-dashed border-border bg-muted">
           <p className="text-sm text-muted-foreground">Loading comments...</p>
@@ -102,6 +93,8 @@ export const CommentsListRegion = ({
 
           <CommentsListContent
             data={data.data}
+            queryParams={queryParams}
+            onSortChange={handleSortChange}
             isFetching={isFetching}
             replyingToCommentId={replyingToCommentId}
             onReplyClick={onReplyClick}
@@ -126,6 +119,8 @@ export const CommentsListRegion = ({
 
 type CommentsListContentProps = {
   data: Comment[];
+  queryParams: GetCommentsParams;
+  onSortChange: (field: SortField) => void;
   isFetching: boolean;
   replyingToCommentId: number | null;
   onReplyClick: (commentId: number) => void;
@@ -134,6 +129,8 @@ type CommentsListContentProps = {
 
 const CommentsListContent = ({
   data,
+  queryParams,
+  onSortChange,
   isFetching,
   replyingToCommentId,
   onReplyClick,
@@ -145,20 +142,24 @@ const CommentsListContent = ({
     <CommentForm parentId={commentId} onSuccess={onReplyClose} />
   );
 
+  if (comments.length === 0) {
+    return (
+      <div className="flex min-h-32 items-center justify-center rounded-lg border border-dashed border-border bg-muted">
+        <p className="text-sm text-muted-foreground">No comments yet.</p>
+      </div>
+    );
+  }
+
   return (
-    <div className={cn(isFetching && 'pointer-events-none opacity-60')}>
-      {comments.length === 0 ? (
-        <div className="flex min-h-32 items-center justify-center rounded-lg border border-dashed border-border bg-muted">
-          <p className="text-sm text-muted-foreground">No comments yet.</p>
-        </div>
-      ) : (
-        <CommentTree
-          comments={comments}
-          replyingToCommentId={replyingToCommentId}
-          onReplyClick={onReplyClick}
-          renderReplyForm={renderReplyForm}
-        />
-      )}
-    </div>
+    <CommentsTable
+      comments={comments}
+      sortBy={queryParams.sortBy}
+      sortOrder={queryParams.sortOrder}
+      onSortChange={onSortChange}
+      isFetching={isFetching}
+      replyingToCommentId={replyingToCommentId}
+      onReplyClick={onReplyClick}
+      renderReplyForm={renderReplyForm}
+    />
   );
 };

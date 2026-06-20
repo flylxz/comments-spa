@@ -17,6 +17,7 @@ import {
   commentFormSchema,
 } from '@/features/manage-comments/model/validation';
 import { CommentHtmlToolbar } from '@/features/manage-comments/ui/CommentHtmlToolbar';
+import { interactivePanelTrigger } from '@/shared/lib/interactiveStyles';
 import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
@@ -268,7 +269,7 @@ export const CommentForm = ({
       {!isReply ? (
         <button
           type="button"
-          className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-md py-0.5 text-left transition-colors hover:bg-muted/50"
+          className={interactivePanelTrigger}
           aria-expanded={isExpanded}
           aria-label={
             isFolded ? 'Expand comment form' : 'Collapse comment form'

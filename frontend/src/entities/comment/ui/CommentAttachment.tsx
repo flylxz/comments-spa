@@ -14,23 +14,33 @@ import {
   isCommentImageAttachment,
   resolveCommentFileUrl,
 } from '@/entities/comment/lib/resolveCommentFileUrl';
+import { interactiveFileChip } from '@/shared/lib/interactiveStyles';
 import { cn } from '@/shared/lib/utils';
 
 export type CommentAttachmentProps = {
   commentId: number;
   fileUrl: string;
+  fileName?: string | null;
+  fileSize?: number | null;
   className?: string;
 };
 
 export const CommentAttachment = ({
   commentId,
   fileUrl,
+  fileName: storedFileName,
+  fileSize: storedFileSize,
   className,
 }: CommentAttachmentProps) => {
   const resolvedUrl = resolveCommentFileUrl(fileUrl);
-  const fileName = getCommentAttachmentFileName(fileUrl);
-  const fileFormat = getCommentAttachmentFormat(fileUrl);
+  const displayFileName =
+    storedFileName ?? getCommentAttachmentFileName(fileUrl);
+  const fileFormat = getCommentAttachmentFormat(displayFileName);
   const [fileSize, setFileSize] = useState<number | null>(() => {
+    if (storedFileSize != null) {
+      return storedFileSize;
+    }
+
     const cached = getCachedCommentAttachmentSize(resolvedUrl);
 
     return cached === undefined ? null : cached;
@@ -38,6 +48,11 @@ export const CommentAttachment = ({
 
   useEffect(() => {
     if (isCommentImageAttachment(fileUrl)) {
+      return;
+    }
+
+    if (storedFileSize != null) {
+      setFileSize(storedFileSize);
       return;
     }
 
@@ -63,7 +78,7 @@ export const CommentAttachment = ({
     return () => {
       cancelled = true;
     };
-  }, [fileUrl, resolvedUrl]);
+  }, [fileUrl, resolvedUrl, storedFileSize]);
 
   if (isCommentImageAttachment(fileUrl)) {
     return (
@@ -102,14 +117,17 @@ export const CommentAttachment = ({
     <div className={cn('mt-4', className)}>
       <a
         href={resolvedUrl}
-        download={fileName}
-        className="inline-flex max-w-full items-center gap-3 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm text-primary transition-colors hover:border-foreground/20 hover:bg-foreground/12"
+        download={displayFileName}
+        className={cn(
+          interactiveFileChip,
+          'inline-flex max-w-full items-center gap-3 px-3 py-2 text-sm text-primary',
+        )}
       >
         <FileText className="h-4 w-4 shrink-0" aria-hidden />
         <span className="min-w-0 text-left">
           Download attachment:
           <span className="block truncate font-medium text-foreground">
-            {fileName}
+            {displayFileName}
           </span>
           {metaParts.length > 0 ? (
             <span className="block text-xs text-muted-foreground">

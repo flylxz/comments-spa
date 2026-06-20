@@ -11,6 +11,7 @@ import { formatCommentDate } from '@/entities/comment/lib/formatCommentDate';
 import { sanitizeCommentHtml } from '@/entities/comment/lib/sanitizeCommentHtml';
 import type { Comment } from '@/entities/comment/model/types';
 import { CommentAttachment } from '@/entities/comment/ui/CommentAttachment';
+import { interactiveIconButton } from '@/shared/lib/interactiveStyles';
 import { cn } from '@/shared/lib/utils';
 import { Avatar, AvatarFallback } from '@/shared/ui/avatar';
 import { Button } from '@/shared/ui/button';
@@ -73,7 +74,7 @@ export const CommentCard = ({ comment, onReplyClick }: CommentCardProps) => {
         <div className="flex shrink-0 items-center gap-1">
           <a
             href={`#comment-${comment.id}`}
-            className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-background/80 hover:text-foreground"
+            className={interactiveIconButton}
             aria-label="Permalink"
           >
             <Hash className="h-4 w-4" />
@@ -82,7 +83,7 @@ export const CommentCard = ({ comment, onReplyClick }: CommentCardProps) => {
           <Button
             variant="ghost"
             size="icon"
-            className="text-muted-foreground hover:bg-background/80"
+            className="text-muted-foreground"
             aria-label="Bookmark"
           >
             <Bookmark className="h-4 w-4" />
@@ -92,7 +93,7 @@ export const CommentCard = ({ comment, onReplyClick }: CommentCardProps) => {
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 rounded-none text-muted-foreground hover:bg-background/80"
+              className="h-8 w-8 rounded-none text-muted-foreground"
               aria-label="Upvote"
             >
               <ChevronUp className="h-4 w-4" />
@@ -105,7 +106,7 @@ export const CommentCard = ({ comment, onReplyClick }: CommentCardProps) => {
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 rounded-none text-muted-foreground hover:bg-background/80"
+              className="h-8 w-8 rounded-none text-muted-foreground"
               aria-label="Downvote"
             >
               <ChevronDown className="h-4 w-4" />
@@ -121,7 +122,12 @@ export const CommentCard = ({ comment, onReplyClick }: CommentCardProps) => {
       />
 
       {comment.fileUrl ? (
-        <CommentAttachment commentId={comment.id} fileUrl={comment.fileUrl} />
+        <CommentAttachment
+          commentId={comment.id}
+          fileUrl={comment.fileUrl}
+          fileName={comment.fileName}
+          fileSize={comment.fileSize}
+        />
       ) : null}
 
       <footer className="mt-4">
