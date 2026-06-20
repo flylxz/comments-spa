@@ -83,6 +83,12 @@ export const handleUpload = (
 const buildUniqueFilename = (extension: string): string =>
   `${crypto.randomUUID()}${extension}`;
 
+const sanitizeOriginalFileName = (originalName: string): string => {
+  const baseName = path.basename(originalName).replace(/[\0\r\n]/g, '');
+
+  return baseName.slice(0, 255) || 'attachment';
+};
+
 const saveTextFile = async (
   buffer: Buffer,
   extension: string,
@@ -145,6 +151,8 @@ export const processUploadedFile = async (
     req.uploadedFileUrl = isTextFile
       ? await saveTextFile(req.file.buffer, extension)
       : await saveImageFile(req.file.buffer, extension);
+    req.uploadedFileName = sanitizeOriginalFileName(req.file.originalname);
+    req.uploadedFileSize = req.file.buffer.length;
 
     next();
   } catch (error) {

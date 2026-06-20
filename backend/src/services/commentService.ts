@@ -46,6 +46,8 @@ export const createComment = async (
     homePage: input.homePage ?? null,
     text: sanitizeCommentText(input.text),
     fileUrl: input.fileUrl ?? null,
+    fileName: input.fileName ?? null,
+    fileSize: input.fileSize ?? null,
     parentId: input.parentId,
   });
 };

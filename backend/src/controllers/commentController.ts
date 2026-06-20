@@ -35,6 +35,8 @@ export const createComment = async (
     const comment = await commentService.createComment({
       ...req.body,
       fileUrl: req.uploadedFileUrl ?? null,
+      fileName: req.uploadedFileName ?? null,
+      fileSize: req.uploadedFileSize ?? null,
     });
     emitNewComment(comment);
     res.status(201).json({ data: comment });

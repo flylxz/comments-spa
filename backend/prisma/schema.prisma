@@ -14,6 +14,8 @@ model Comment {
   homePage  String?
   text      String
   fileUrl   String?
+  fileName  String?
+  fileSize  Int?
   createdAt DateTime  @default(now())
   parentId  Int?
   parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)

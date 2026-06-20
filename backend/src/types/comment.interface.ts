@@ -5,6 +5,8 @@ export interface Comment {
   homePage: string | null;
   text: string;
   fileUrl: string | null;
+  fileName: string | null;
+  fileSize: number | null;
   createdAt: string;
   parentId: number | null;
   replies: Comment[];
@@ -18,6 +20,8 @@ export interface CreateCommentInput {
   captchaAnswer: string;
   text: string;
   fileUrl?: string | null;
+  fileName?: string | null;
+  fileSize?: number | null;
   parentId?: number;
 }
 

@@ -14,6 +14,8 @@ interface FlatComment {
   homePage: string | null;
   text: string;
   fileUrl: string | null;
+  fileName: string | null;
+  fileSize: number | null;
   createdAt: Date;
   parentId: number | null;
 }
@@ -28,6 +30,8 @@ const mapToComment = (
   homePage: record.homePage,
   text: record.text,
   fileUrl: record.fileUrl,
+  fileName: record.fileName,
+  fileSize: record.fileSize,
   createdAt: record.createdAt.toISOString(),
   parentId: record.parentId,
   replies,
@@ -125,20 +129,20 @@ export interface CreateCommentRecordInput {
   homePage: string | null;
   text: string;
   fileUrl: string | null;
+  fileName: string | null;
+  fileSize: number | null;
   parentId?: number;
 }
 
 export const createCommentRecord = async (
   input: CreateCommentRecordInput,
 ): Promise<Comment> => {
+  const { parentId, ...commentData } = input;
+
   const created = await prisma.comment.create({
     data: {
-      userName: input.userName,
-      email: input.email,
-      homePage: input.homePage,
-      text: input.text,
-      fileUrl: input.fileUrl,
-      parentId: input.parentId ?? null,
+      ...commentData,
+      parentId: parentId ?? null,
     },
   });
 
