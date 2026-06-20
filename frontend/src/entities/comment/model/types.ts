@@ -5,6 +5,8 @@ export interface Comment {
   email: string;
   homePage?: string;
   text: string;
+  /** Client-side sanitized HTML; set by normalizeCommentTree before render. */
+  sanitizedText?: string;
   fileUrl?: string;
   fileName?: string | null;
   fileSize?: number | null;

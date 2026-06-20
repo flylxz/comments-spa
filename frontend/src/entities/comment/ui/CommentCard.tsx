@@ -5,7 +5,7 @@ import {
   CornerUpLeft,
   Hash,
 } from 'lucide-react';
-import { motion, type Variants } from 'motion/react';
+import { memo } from 'react';
 
 import { formatCommentDate } from '@/entities/comment/lib/formatCommentDate';
 import { sanitizeCommentHtml } from '@/entities/comment/lib/sanitizeCommentHtml';
@@ -32,19 +32,15 @@ const getInitials = (userName: string): string => {
   return userName.slice(0, 2).toUpperCase();
 };
 
-const cardVariants: Variants = {
-  initial: { opacity: 0, y: -20 },
-  animate: { opacity: 1, y: 0 },
-};
+const CommentCardComponent = ({ comment, onReplyClick }: CommentCardProps) => {
+  const safeHtml = comment.sanitizedText ?? sanitizeCommentHtml(comment.text);
 
-export const CommentCard = ({ comment, onReplyClick }: CommentCardProps) => {
   const handleReplyClick = (): void => {
     onReplyClick?.(comment.id);
   };
 
   return (
-    <motion.article
-      variants={cardVariants}
+    <article
       id={`comment-${comment.id}`}
       className="rounded-lg border border-border bg-card p-4 text-card-foreground shadow-sm"
     >
@@ -118,7 +114,7 @@ export const CommentCard = ({ comment, onReplyClick }: CommentCardProps) => {
       <div
         className="mt-4 whitespace-pre-line text-sm leading-relaxed text-foreground [&_a]:text-primary [&_a]:underline [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_p+p]:mt-2"
         // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is sanitized with DOMPurify before rendering
-        dangerouslySetInnerHTML={{ __html: sanitizeCommentHtml(comment.text) }}
+        dangerouslySetInnerHTML={{ __html: safeHtml }}
       />
 
       {comment.fileUrl ? (
@@ -141,6 +137,8 @@ export const CommentCard = ({ comment, onReplyClick }: CommentCardProps) => {
           Reply
         </Button>
       </footer>
-    </motion.article>
+    </article>
   );
 };
+
+export const CommentCard = memo(CommentCardComponent);
