@@ -129,11 +129,11 @@ export const CommentAttachment = ({
           <span className="block truncate font-medium text-foreground">
             {displayFileName}
           </span>
-          {metaParts.length > 0 ? (
+          {metaParts.length > 0 && (
             <span className="block text-xs text-muted-foreground">
               {metaParts.join(' · ')}
             </span>
-          ) : null}
+          )}
         </span>
       </a>
     </div>

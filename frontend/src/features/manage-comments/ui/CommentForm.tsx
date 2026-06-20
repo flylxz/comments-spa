@@ -2,9 +2,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import DOMPurify from 'dompurify';
 import { ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { motion, type Variants } from 'motion/react';
-import { useEffect, useRef, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { type RefObject, useEffect, useRef, useState } from 'react';
+import { type Control, Controller, useForm } from 'react-hook-form';
 
+import { sanitizeCommentHtml } from '@/entities/comment/lib/sanitizeCommentHtml';
 import { useCaptchaQuery } from '@/features/manage-comments/api/useCaptchaQuery';
 import { useCreateCommentMutation } from '@/features/manage-comments/api/useCreateCommentMutation';
 import {
@@ -113,12 +114,77 @@ const boxVariants: Variants = {
   animate: { opacity: 1, y: 0 },
 };
 
+const commentTextClassName =
+  'whitespace-pre-line text-sm leading-relaxed text-foreground [&_a]:text-primary [&_a]:underline [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_p+p]:mt-2';
+
+const CommentTextPreview = ({ text }: { text: string }) => {
+  const trimmed = text.trim();
+
+  if (trimmed.length === 0) {
+    return (
+      <p className="px-3 py-2 text-sm italic text-muted-foreground">
+        Nothing to preview.
+      </p>
+    );
+  }
+
+  return (
+    <div
+      className={cn('px-3 py-2', commentTextClassName)}
+      // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is sanitized with DOMPurify before rendering
+      dangerouslySetInnerHTML={{ __html: sanitizeCommentHtml(text) }}
+    />
+  );
+};
+
+type CommentTextFieldProps = {
+  control: Control<CommentFormValues>;
+  disabled: boolean;
+  isReply: boolean;
+  textAreaRef: RefObject<HTMLTextAreaElement | null>;
+};
+
+const CommentTextField = ({
+  control,
+  disabled,
+  isReply,
+  textAreaRef,
+}: CommentTextFieldProps) => (
+  <Controller
+    name="text"
+    control={control}
+    render={({ field }) => {
+      const handleRef = (element: HTMLTextAreaElement | null): void => {
+        field.ref(element);
+        textAreaRef.current = element;
+      };
+
+      return (
+        <Textarea
+          id="text"
+          placeholder="Write your comment..."
+          disabled={disabled}
+          value={field.value}
+          onBlur={field.onBlur}
+          onChange={field.onChange}
+          ref={handleRef}
+          className={cn(
+            'rounded-t-none text-sm',
+            isReply ? 'min-h-[64px]' : 'min-h-[72px]',
+          )}
+        />
+      );
+    }}
+  />
+);
+
 export const CommentForm = ({
   parentId = null,
   onSuccess,
 }: CommentFormProps) => {
   const isReply = parentId !== null;
   const [isFolded, setIsFolded] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const {
     mutate,
     isPending,
@@ -143,6 +209,7 @@ export const CommentForm = ({
     setError,
     setValue,
     getValues,
+    watch,
     formState: { errors },
   } = useForm<CommentFormValues>({
     resolver: zodResolver(commentFormSchema),
@@ -217,6 +284,7 @@ export const CommentForm = ({
     mutate(formData, {
       onSuccess: async () => {
         reset(getDefaultValues(parentId));
+        setIsPreviewOpen(false);
         setValue('captchaValue', '');
         await refreshCaptchaChallenge();
         onSuccess?.();
@@ -247,6 +315,8 @@ export const CommentForm = ({
       textarea.setSelectionRange(selectionStart, selectionEnd);
     });
   };
+
+  const commentText = watch('text');
 
   const isCaptchaBusy = isCaptchaLoading || isCaptchaFetching;
   const captchaErrorMessage =
@@ -294,7 +364,7 @@ export const CommentForm = ({
       )}
 
       {isExpanded ? (
-        <>
+        <div className="contents">
           {showGlobalError ? (
             <p className="rounded-md bg-red-50 px-2.5 py-1.5 text-xs text-red-700">
               {error instanceof Error
@@ -358,34 +428,45 @@ export const CommentForm = ({
             </FieldLabel>
             <CommentHtmlToolbar
               compact
-              disabled={isPending}
+              disabled={isPending || isPreviewOpen}
               onInsertTag={handleInsertHtmlTag}
             />
-            <Controller
-              name="text"
-              control={control}
-              render={({ field: { onChange, onBlur, value, ref } }) => (
-                <Textarea
-                  id="text"
-                  placeholder="Write your comment..."
-                  disabled={isPending}
-                  value={value}
-                  onBlur={onBlur}
-                  onChange={onChange}
-                  ref={(element: HTMLTextAreaElement | null) => {
-                    ref(element);
-                    textAreaRef.current = element;
-                  }}
-                  className={cn(
-                    'rounded-t-none text-sm',
-                    isReply ? 'min-h-[64px]' : 'min-h-[72px]',
-                  )}
-                />
-              )}
-            />
-            <p className="text-[11px] leading-tight text-muted-foreground">
-              Allowed tags: &lt;a&gt;, &lt;code&gt;, &lt;i&gt;, &lt;strong&gt;
-            </p>
+            {isPreviewOpen ? (
+              <section
+                id="text"
+                aria-label="Comment preview"
+                className={cn(
+                  'rounded-t-none border border-border bg-background text-sm',
+                  isReply ? 'min-h-[64px]' : 'min-h-[72px]',
+                )}
+              >
+                <CommentTextPreview text={commentText} />
+              </section>
+            ) : (
+              <CommentTextField
+                control={control}
+                disabled={isPending}
+                isReply={isReply}
+                textAreaRef={textAreaRef}
+              />
+            )}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[11px] leading-tight text-muted-foreground">
+                Allowed tags: &lt;a&gt;, &lt;code&gt;, &lt;i&gt;, &lt;strong&gt;
+              </p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-xs text-muted-foreground"
+                disabled={isPending}
+                onClick={() => {
+                  setIsPreviewOpen((open) => !open);
+                }}
+              >
+                {isPreviewOpen ? 'Edit' : 'Preview'}
+              </Button>
+            </div>
             <FieldError message={errors.text?.message} />
           </div>
 
@@ -494,7 +575,7 @@ export const CommentForm = ({
                   : 'Post comment'}
             </Button>
           </div>
-        </>
+        </div>
       ) : null}
     </motion.form>
   );
