@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+import {
+  CAPTCHA_ANSWER_ERROR_MESSAGE,
+  CAPTCHA_ANSWER_PATTERN,
+} from '../lib/captchaValidation.js';
+
 export const createCommentSchema = z.object({
   userName: z
     .string({ required_error: 'userName is required' })
@@ -19,7 +24,8 @@ export const createCommentSchema = z.object({
     .min(1, 'captchaId is required'),
   captchaAnswer: z
     .string({ required_error: 'captchaAnswer is required' })
-    .min(1, 'captchaAnswer is required'),
+    .min(1, 'captchaAnswer is required')
+    .regex(CAPTCHA_ANSWER_PATTERN, CAPTCHA_ANSWER_ERROR_MESSAGE),
   text: z
     .string({ required_error: 'text is required' })
     .min(1, 'text is required'),

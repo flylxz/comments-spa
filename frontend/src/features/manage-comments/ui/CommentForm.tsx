@@ -6,6 +6,7 @@ import { type RefObject, useEffect, useRef, useState } from 'react';
 import { type Control, Controller, useForm } from 'react-hook-form';
 
 import { sanitizeCommentHtml } from '@/entities/comment/lib/sanitizeCommentHtml';
+import { validateCommentHtml } from '@/entities/comment/lib/validateCommentHtml';
 import { useCaptchaQuery } from '@/features/manage-comments/api/useCaptchaQuery';
 import { useCreateCommentMutation } from '@/features/manage-comments/api/useCreateCommentMutation';
 import {
@@ -124,6 +125,16 @@ const CommentTextPreview = ({ text }: { text: string }) => {
     return (
       <p className="px-3 py-2 text-sm italic text-muted-foreground">
         Nothing to preview.
+      </p>
+    );
+  }
+
+  const htmlError = validateCommentHtml(trimmed);
+
+  if (htmlError !== null) {
+    return (
+      <p className="px-3 py-2 text-sm text-red-600" aria-live="polite">
+        {htmlError}
       </p>
     );
   }

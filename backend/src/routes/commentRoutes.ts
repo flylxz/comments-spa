@@ -4,6 +4,7 @@ import {
   createComment,
   getComments,
 } from '../controllers/commentController.js';
+import { createCommentRateLimiter } from '../middlewares/rateLimiters.js';
 import {
   handleUpload,
   processUploadedFile,
@@ -20,6 +21,7 @@ const commentRoutes = Router();
 commentRoutes.get('/', validateQuery(getCommentsQuerySchema), getComments);
 commentRoutes.post(
   '/',
+  createCommentRateLimiter,
   handleUpload,
   processUploadedFile,
   validateBody(createCommentSchema),

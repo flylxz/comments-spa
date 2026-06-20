@@ -1,3 +1,5 @@
+import { isAllowedLinkHref } from './isAllowedLinkHref.js';
+
 export const ALLOWED_COMMENT_TAGS = ['a', 'code', 'i', 'strong'] as const;
 
 type AllowedCommentTag = (typeof ALLOWED_COMMENT_TAGS)[number];
@@ -12,32 +14,23 @@ const isAllowedTag = (tagName: string): tagName is AllowedCommentTag =>
 const parseAnchorAttributes = (
   attributesPart: string,
 ): { valid: true } | { valid: false; message: string } => {
-  const attributePattern = /\s+(href|title)\s*=\s*(?:"([^"]*)"|'([^']*)')/gi;
+  if (/\s+[a-zA-Z_:][\w:.-]*\s*=\s*[^"'\s>]/i.test(attributesPart)) {
+    return {
+      valid: false,
+      message: 'Attribute values on <a> must be quoted',
+    };
+  }
+
+  const hasHrefAttribute = /\shref\s*=/i.test(attributesPart);
+  const hasTitleAttribute = /\stitle\s*=/i.test(attributesPart);
+  let hrefValidated = false;
+  let titleValidated = false;
+  const attributePattern =
+    /\s+([a-zA-Z_:][\w:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/gi;
   let match: RegExpExecArray | null = attributePattern.exec(attributesPart);
 
   while (match !== null) {
-    const attributeName = match[1];
-
-    if (attributeName === 'href') {
-      const hrefValue = (match[2] ?? match[3] ?? '').trim().toLowerCase();
-
-      if (
-        hrefValue.startsWith('javascript:') ||
-        hrefValue.startsWith('data:')
-      ) {
-        return { valid: false, message: 'Link href is not allowed' };
-      }
-    }
-
-    match = attributePattern.exec(attributesPart);
-  }
-
-  const disallowedAttributePattern = /\s+([a-zA-Z_:][\w:.-]*)\s*=/g;
-  let disallowedMatch: RegExpExecArray | null =
-    disallowedAttributePattern.exec(attributesPart);
-
-  while (disallowedMatch !== null) {
-    const attributeName = disallowedMatch[1]?.toLowerCase();
+    const attributeName = match[1]?.toLowerCase() ?? '';
 
     if (attributeName !== 'href' && attributeName !== 'title') {
       return {
@@ -46,7 +39,37 @@ const parseAnchorAttributes = (
       };
     }
 
-    disallowedMatch = disallowedAttributePattern.exec(attributesPart);
+    if (attributeName === 'href') {
+      const hrefValue = (match[2] ?? match[3] ?? '').trim();
+      hrefValidated = true;
+
+      if (!isAllowedLinkHref(hrefValue)) {
+        return {
+          valid: false,
+          message: 'Link href must be a valid http, https, or mailto URL',
+        };
+      }
+    }
+
+    if (attributeName === 'title') {
+      titleValidated = true;
+    }
+
+    match = attributePattern.exec(attributesPart);
+  }
+
+  if (hasHrefAttribute && !hrefValidated) {
+    return {
+      valid: false,
+      message: 'Invalid href attribute on <a>',
+    };
+  }
+
+  if (hasTitleAttribute && !titleValidated) {
+    return {
+      valid: false,
+      message: 'Invalid title attribute on <a>',
+    };
   }
 
   return { valid: true };
