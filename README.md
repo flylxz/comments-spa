@@ -1,0 +1,252 @@
+# Comments SPA
+
+Одностраничное приложение для публикации и просмотра комментариев с каскадными ответами, CAPTCHA, загрузкой файлов и real-time обновлением списка.
+
+**Live demo:** деплой на [Render](https://render.com) (см. раздел [Деплой на Render](#деплой-на-render)).
+
+---
+
+## Стек
+
+| Слой           | Технологии                                                                                                    |
+| -------------- | ------------------------------------------------------------------------------------------------------------- |
+| Frontend       | React 19, TypeScript, Vite, TanStack Query, Tailwind CSS, shadcn/ui, DOMPurify, Socket.IO client              |
+| Backend        | Express 5, TypeScript, Bun, Prisma ORM, PostgreSQL, Socket.IO, sanitize-html, sharp, multer, svg-captcha, JWT |
+| Инфраструктура | Docker, nginx, docker-compose, Taskfile, Render Blueprint                                                     |
+
+---
+
+## Требования
+
+- [Bun](https://bun.sh) **1.3+** (указан в `packageManager`)
+- [Docker](https://www.docker.com/) и Docker Compose — для локального PostgreSQL
+- [Task](https://taskfile.dev) — обёртка над скриптами проекта
+
+---
+
+## Быстрый старт
+
+```bash
+git clone <repository-url>
+cd comments-spa
+
+task setup   # .env, зависимости, Postgres, миграции
+task dev     # frontend :5173 + backend :3000
+```
+
+Откройте [http://localhost:5173](http://localhost:5173).
+
+Vite проксирует `/api`, `/uploads` и `/socket.io` на backend (`frontend/vite.config.ts`).
+
+### Опционально: тестовые данные
+
+```bash
+task db:seed   # 100 top-level комментариев
+```
+
+---
+
+## Переменные окружения
+
+Task `env` копирует `.env.example` → `.env`, если файлов ещё нет.
+
+### Backend (`backend/.env`)
+
+| Переменная     | Описание                          | Пример                                                                 |
+| -------------- | --------------------------------- | ---------------------------------------------------------------------- |
+| `DATABASE_URL` | PostgreSQL connection string      | `postgresql://user:password@localhost:5432/comments_spa?schema=public` |
+| `PORT`         | Порт Express (локально)           | `3000`                                                                 |
+| `JWT_SECRET`   | Секрет для подписи CAPTCHA-токена | `your-secret-key-change-in-production`                                 |
+
+### Frontend (`frontend/.env`)
+
+| Переменная        | Описание                                      | Пример                      |
+| ----------------- | --------------------------------------------- | --------------------------- |
+| `VITE_API_URL`    | Базовый URL API                               | `http://localhost:3000/api` |
+| `VITE_API_ORIGIN` | Origin для статики `/uploads/*` (опционально) | `http://localhost:3000`     |
+
+В production-сборке Docker `VITE_API_URL=/api` — относительный путь через nginx.
+
+---
+
+## База данных и миграции
+
+Локальный PostgreSQL поднимается через `docker-compose.yml`:
+
+```bash
+task db:up        # запустить Postgres
+task db:migrate   # prisma migrate dev
+task db:down      # остановить
+task db:reset     # остановить и удалить volume
+```
+
+Схема описана в `backend/prisma/schema.prisma`. Миграции лежат в `backend/prisma/migrations/`.
+
+### Модель `Comment`
+
+| Поле        | Тип      | Описание                           |
+| ----------- | -------- | ---------------------------------- |
+| `id`        | Int      | PK, autoincrement                  |
+| `userName`  | String   | Имя пользователя                   |
+| `email`     | String   | E-mail                             |
+| `homePage`  | String?  | Homepage URL                       |
+| `text`      | String   | HTML-текст комментария (sanitized) |
+| `fileUrl`   | String?  | Путь к загруженному файлу          |
+| `fileName`  | String?  | Оригинальное имя файла             |
+| `fileSize`  | Int?     | Размер файла в байтах              |
+| `createdAt` | DateTime | Дата создания                      |
+| `parentId`  | Int?     | FK на родительский комментарий     |
+
+---
+
+## Taskfile — основные команды
+
+```bash
+task setup          # первичная настройка
+task dev            # dev-серверы frontend + backend
+task verify         # lint + typecheck
+task build          # production-сборка
+task db:seed        # наполнить БД тестовыми комментариями
+task docker:build   # собрать Docker-образ
+task docker:run     # запустить контейнер локально (нужен DATABASE_URL)
+```
+
+Полный список: `task --list`.
+
+---
+
+## Docker (production-образ)
+
+Многостадийный `Dockerfile` собирает frontend (Vite), backend (tsc) и запускает nginx + Express в одном контейнере.
+
+```bash
+task docker:build
+task docker:run   # порт 10000, env из backend/.env
+```
+
+При старте контейнера (`docker/start.sh`):
+
+1. nginx слушает `$PORT` (по умолчанию `10000`)
+2. `prisma migrate deploy` применяет миграции
+3. Express слушает `3000` внутри контейнера
+
+Health-check: `GET /health`.
+
+---
+
+## Деплой на Render
+
+В репозитории есть [`render.yaml`](render.yaml) — Blueprint для Render:
+
+- **Web service** — Docker runtime, free tier, region Frankfurt
+- **PostgreSQL** — managed database, `DATABASE_URL` пробрасывается автоматически
+- `JWT_SECRET` генерируется Render
+- `prisma migrate deploy` выполняется при каждом старте контейнера
+
+### Шаги
+
+1. Форк / push репозитория на GitHub
+2. [Render Dashboard](https://dashboard.render.com) → **New** → **Blueprint** → выбрать репозиторий
+3. Render создаст web service и Postgres по `render.yaml`
+4. Дождаться успешного деплоя; проверить `https://<your-app>.onrender.com/health`
+
+### Ограничения free tier
+
+- Web service засыпает после ~15 мин без активности (cold start ~30–60 с)
+- Postgres на free tier истекает через 90 дней без апгрейда
+- Загруженные файлы **не персистентны** — при редеплое `/uploads` очищается
+
+---
+
+## Smoke-test
+
+Проверка после `task setup && task dev` или после деплоя на Render.
+
+### Локально
+
+- [ ] [http://localhost:5173](http://localhost:5173) открывается
+- [ ] [http://localhost:3000/health](http://localhost:3000/health) → `{"status":"ok"}`
+- [ ] CAPTCHA отображается и обновляется
+- [ ] Отправка комментария с валидными полями — комментарий появляется в списке
+- [ ] Reply под существующим комментарием отображается каскадом
+- [ ] Сортировка по клику на заголовки таблицы (User Name, E-mail, Date)
+- [ ] Пагинация (25 записей на страницу)
+- [ ] Preview — рендер без submit
+- [ ] Загрузка JPG/GIF/PNG (resize до 320×240) и TXT (≤ 100 KB)
+- [ ] HTML toolbar: `[i]`, `[strong]`, `[code]`, `[a]`
+- [ ] Lightbox для изображений
+- [ ] Real-time: второй вкладкой — новый комментарий появляется без reload
+
+### Качество кода
+
+```bash
+task verify
+```
+
+---
+
+## API
+
+| Метод  | Путь                                     | Описание                                     |
+| ------ | ---------------------------------------- | -------------------------------------------- |
+| `GET`  | `/api/captcha`                           | SVG CAPTCHA + JWT `captchaId`                |
+| `GET`  | `/api/comments?page=&sortBy=&sortOrder=` | Пагинированный список top-level комментариев |
+| `POST` | `/api/comments`                          | Создание комментария (multipart/form-data)   |
+| `GET`  | `/health`                                | Health-check                                 |
+
+Query-параметры `GET /comments`: `page` (default 1), `sortBy` (`userName` \| `email` \| `createdAt`), `sortOrder` (`asc` \| `desc`).
+
+**CAPTCHA:** ответ не хранится на сервере. `GET /api/captcha` возвращает SVG и подписывает правильный ответ в JWT (`captchaId`, TTL 3 мин). При `POST /api/comments` токен проверяется в `CaptchaService.verifyCaptcha()`.
+
+---
+
+## Архитектура backend
+
+```
+Routing → Controllers → Services → Repositories → Prisma
+```
+
+OOP-классы: `CommentService`, `CommentRepository`, `CaptchaService`. При создании комментария эмитится событие `comments:new` через Socket.IO.
+
+---
+
+## Архитектура frontend
+
+Список комментариев кешируется через TanStack Query (`useCommentsQuery`, ключи `commentQueryKeys`). После создания комментария mutation инвалидирует кеш; WebSocket-событие также вызывает `invalidateQueries`. Real-time подписка — `useCommentSocket`.
+
+---
+
+## Security
+
+| Угроза          | Мера                                                                                                                       |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| XSS             | `sanitize-html` на backend + DOMPurify на frontend; whitelist тегов `a`, `code`, `i`, `strong`                             |
+| SQL injection   | Prisma ORM, без raw queries                                                                                                |
+| Upload abuse    | Whitelist MIME/расширений; TXT ≤ 100 KB; изображения resize через `sharp` до 320×240                                       |
+| CAPTCHA bypass  | Stateless JWT (TTL 3 мин, секрет `JWT_SECRET`); ответ не хранится в сессии/БД, проверка в `CaptchaService.verifyCaptcha()` |
+| Валидация ввода | Zod на backend и frontend; `userName` — `[a-zA-Z0-9]+`                                                                     |
+
+> Rate limiting и security headers (`helmet`) — в плане hardening, см. [`docs/ROADMAP.md`](docs/ROADMAP.md).
+
+---
+
+## Структура проекта
+
+```
+comments-spa/
+├── backend/          # Express API, Prisma, uploads
+├── frontend/         # React SPA (Vite)
+├── docker/           # nginx template, start.sh
+├── docs/             # схема БД
+├── docker-compose.yml
+├── Dockerfile
+├── render.yaml
+├── Taskfile.yml
+└── README.md
+```
+
+---
+
+## Лицензия
+
+Учебный / тестовый проект.

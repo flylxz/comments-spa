@@ -8,5 +8,5 @@ alwaysApply: false
 
 - **Encapsulation**: Never call `useQuery` or `useMutation` directly inside presentation UI components. Wrap them in custom hooks inside the API/feature layer (e.g., `useCommentsQuery.ts`).
 - **Cache Invalidation**: Always implement explicit cache invalidation using `queryClient.invalidateQueries` inside `onSuccess` mutation handlers to keep server data consistent.
-- **State Separation**: Do not duplicate server state into client state managers (Zustand) or local `useState`. Rely entirely on TanStack Query's cache.
+- **State Separation**: Do not duplicate server state into local `useState`. Rely entirely on TanStack Query's cache.
 - **Loading & Errors**: Use built-in properties (`isLoading`, `isError`, `status`) provided by the hook instead of maintaining manual boolean flags.
