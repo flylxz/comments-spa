@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 
-import * as captchaService from '../services/captchaService.js';
+import { captchaService } from '../services/captchaService.js';
 
 export const getCaptcha = async (
   _req: Request,

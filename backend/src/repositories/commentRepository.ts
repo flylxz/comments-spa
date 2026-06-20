@@ -1,3 +1,4 @@
+import type { PrismaClient } from '../generated/prisma/client.js';
 import { prisma } from '../lib/prisma.js';
 import type {
   Comment,
@@ -18,6 +19,17 @@ interface FlatComment {
   fileSize: number | null;
   createdAt: Date;
   parentId: number | null;
+}
+
+export interface CreateCommentRecordInput {
+  userName: string;
+  email: string;
+  homePage: string | null;
+  text: string;
+  fileUrl: string | null;
+  fileName: string | null;
+  fileSize: number | null;
+  parentId?: number;
 }
 
 const mapToComment = (
@@ -45,61 +57,6 @@ const buildReplyTree = (
     .filter((reply) => reply.parentId === parentId)
     .map((reply) => mapToComment(reply, buildReplyTree(allReplies, reply.id)));
 
-export const findTopLevelComments = async (
-  query: PaginatedCommentsQuery,
-): Promise<PaginatedCommentsResult> => {
-  const { page, sortBy, sortOrder } = query;
-  const skip = (page - 1) * PAGE_SIZE;
-
-  const [total, topLevelComments] = await Promise.all([
-    prisma.comment.count({ where: { parentId: null } }),
-    prisma.comment.findMany({
-      where: { parentId: null },
-      orderBy: { [sortBy]: sortOrder },
-      skip,
-      take: PAGE_SIZE,
-    }),
-  ]);
-
-  if (topLevelComments.length === 0) {
-    return {
-      data: [],
-      pagination: {
-        page,
-        pageSize: PAGE_SIZE,
-        total,
-        totalPages: Math.ceil(total / PAGE_SIZE),
-      },
-    };
-  }
-
-  const topLevelIds = topLevelComments.map((comment) => comment.id);
-  const allReplies = await prisma.comment.findMany({
-    where: {
-      parentId: { not: null },
-    },
-    orderBy: { createdAt: 'asc' },
-  });
-
-  const repliesForPage = allReplies.filter((reply) =>
-    isDescendantOfTopLevel(reply, allReplies, topLevelIds),
-  );
-
-  const data = topLevelComments.map((comment) =>
-    mapToComment(comment, buildReplyTree(repliesForPage, comment.id)),
-  );
-
-  return {
-    data,
-    pagination: {
-      page,
-      pageSize: PAGE_SIZE,
-      total,
-      totalPages: Math.ceil(total / PAGE_SIZE),
-    },
-  };
-};
-
 const isDescendantOfTopLevel = (
   reply: FlatComment,
   allReplies: FlatComment[],
@@ -123,28 +80,77 @@ const isDescendantOfTopLevel = (
   return false;
 };
 
-export interface CreateCommentRecordInput {
-  userName: string;
-  email: string;
-  homePage: string | null;
-  text: string;
-  fileUrl: string | null;
-  fileName: string | null;
-  fileSize: number | null;
-  parentId?: number;
+export class CommentRepository {
+  constructor(private readonly db: PrismaClient = prisma) {}
+
+  async findTopLevelComments(
+    query: PaginatedCommentsQuery,
+  ): Promise<PaginatedCommentsResult> {
+    const { page, sortBy, sortOrder } = query;
+    const skip = (page - 1) * PAGE_SIZE;
+
+    const [total, topLevelComments] = await Promise.all([
+      this.db.comment.count({ where: { parentId: null } }),
+      this.db.comment.findMany({
+        where: { parentId: null },
+        orderBy: { [sortBy]: sortOrder },
+        skip,
+        take: PAGE_SIZE,
+      }),
+    ]);
+
+    if (topLevelComments.length === 0) {
+      return {
+        data: [],
+        pagination: {
+          page,
+          pageSize: PAGE_SIZE,
+          total,
+          totalPages: Math.ceil(total / PAGE_SIZE),
+        },
+      };
+    }
+
+    const topLevelIds = topLevelComments.map((comment) => comment.id);
+
+    const allReplies = await this.db.comment.findMany({
+      where: {
+        parentId: { not: null },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const repliesForPage = allReplies.filter((reply) =>
+      isDescendantOfTopLevel(reply, allReplies, topLevelIds),
+    );
+
+    const data = topLevelComments.map((comment) =>
+      mapToComment(comment, buildReplyTree(repliesForPage, comment.id)),
+    );
+
+    return {
+      data,
+      pagination: {
+        page,
+        pageSize: PAGE_SIZE,
+        total,
+        totalPages: Math.ceil(total / PAGE_SIZE),
+      },
+    };
+  }
+
+  async createCommentRecord(input: CreateCommentRecordInput): Promise<Comment> {
+    const { parentId, ...commentData } = input;
+
+    const created = await this.db.comment.create({
+      data: {
+        ...commentData,
+        parentId: parentId ?? null,
+      },
+    });
+
+    return mapToComment(created);
+  }
 }
 
-export const createCommentRecord = async (
-  input: CreateCommentRecordInput,
-): Promise<Comment> => {
-  const { parentId, ...commentData } = input;
-
-  const created = await prisma.comment.create({
-    data: {
-      ...commentData,
-      parentId: parentId ?? null,
-    },
-  });
-
-  return mapToComment(created);
-};
+export const commentRepository = new CommentRepository();
