@@ -3,18 +3,21 @@ import {
   type ReactNode,
   type SetStateAction,
   useEffect,
+  useMemo,
   useRef,
 } from 'react';
 
 import type { Comment, GetCommentsParams, SortField } from '@/entities/comment';
 import {
   CommentPagination,
-  CommentsTable,
+  CommentsSortBar,
+  CommentTree,
   getNextSortParams,
   normalizeCommentTree,
   useCommentsQuery,
 } from '@/entities/comment';
 import { CommentForm } from '@/features/manage-comments';
+import { cn } from '@/shared/lib/utils';
 
 export type CommentsListRegionProps = {
   queryParams: GetCommentsParams;
@@ -127,6 +130,14 @@ type CommentsListContentProps = {
   onReplyClose: () => void;
 };
 
+const createReplyFormRenderer = (
+  onReplyClose: () => void,
+): ((commentId: number) => ReactNode) => {
+  return (commentId: number): ReactNode => (
+    <CommentForm parentId={commentId} onSuccess={onReplyClose} />
+  );
+};
+
 const CommentsListContent = ({
   data,
   queryParams,
@@ -136,10 +147,11 @@ const CommentsListContent = ({
   onReplyClick,
   onReplyClose,
 }: CommentsListContentProps) => {
-  const comments = normalizeCommentTree(data);
+  const comments = useMemo(() => normalizeCommentTree(data), [data]);
 
-  const renderReplyForm = (commentId: number): ReactNode => (
-    <CommentForm parentId={commentId} onSuccess={onReplyClose} />
+  const renderReplyForm = useMemo(
+    () => createReplyFormRenderer(onReplyClose),
+    [onReplyClose],
   );
 
   if (comments.length === 0) {
@@ -151,15 +163,23 @@ const CommentsListContent = ({
   }
 
   return (
-    <CommentsTable
-      comments={comments}
-      sortBy={queryParams.sortBy}
-      sortOrder={queryParams.sortOrder}
-      onSortChange={onSortChange}
-      isFetching={isFetching}
-      replyingToCommentId={replyingToCommentId}
-      onReplyClick={onReplyClick}
-      renderReplyForm={renderReplyForm}
-    />
+    <div
+      className={cn(
+        'flex flex-col gap-4',
+        isFetching && 'pointer-events-none opacity-60',
+      )}
+    >
+      <CommentsSortBar
+        sortBy={queryParams.sortBy}
+        sortOrder={queryParams.sortOrder}
+        onSortChange={onSortChange}
+      />
+      <CommentTree
+        comments={comments}
+        replyingToCommentId={replyingToCommentId}
+        onReplyClick={onReplyClick}
+        renderReplyForm={renderReplyForm}
+      />
+    </div>
   );
 };
