@@ -1,0 +1,11 @@
+---
+description: Spec-first workflow - plan and pseudocode before writing production code
+alwaysApply: true
+---
+
+# Code Generation Workflow (Spec-First Approach)
+
+- NEVER write complex code or large components immediately upon request.
+- STEP 1: Always output a high-level text plan, step-by-step logic, or pseudocode first.
+- STEP 2: Wait for the user's explicit approval or adjustments.
+- STEP 3: Only after approval, write the actual production code strictly following the agreed plan.
