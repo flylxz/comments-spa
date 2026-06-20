@@ -6,6 +6,8 @@ export interface Comment {
   homePage?: string;
   text: string;
   fileUrl?: string;
+  fileName?: string | null;
+  fileSize?: number | null;
   parentId: number | null;
   createdAt: string;
   replies?: Comment[];
