@@ -24,34 +24,38 @@ const isCaptchaJwtPayload = (
   return typeof answer === 'string';
 };
 
-export const generateCaptcha = (): CaptchaResponse => {
-  const captcha = svgCaptcha.create();
-  const jwtSecret = getJwtSecret();
-  const captchaId = jwt.sign({ answer: captcha.text }, jwtSecret, {
-    expiresIn: CAPTCHA_TOKEN_EXPIRES_IN,
-  });
+export class CaptchaService {
+  generateCaptcha(): CaptchaResponse {
+    const captcha = svgCaptcha.create();
+    const jwtSecret = getJwtSecret();
+    const captchaId = jwt.sign({ answer: captcha.text }, jwtSecret, {
+      expiresIn: CAPTCHA_TOKEN_EXPIRES_IN,
+    });
 
-  return {
-    captchaSvg: captcha.data,
-    captchaId,
-  };
-};
-
-export const verifyCaptcha = (input: VerifyCaptchaInput): void => {
-  const jwtSecret = getJwtSecret();
-  let payload: unknown;
-
-  try {
-    payload = jwt.verify(input.captchaId, jwtSecret);
-  } catch {
-    throw new FieldValidationError('captchaAnswer', CAPTCHA_ERROR_MESSAGE);
+    return {
+      captchaSvg: captcha.data,
+      captchaId,
+    };
   }
 
-  if (!isCaptchaJwtPayload(payload)) {
-    throw new FieldValidationError('captchaAnswer', CAPTCHA_ERROR_MESSAGE);
-  }
+  verifyCaptcha(input: VerifyCaptchaInput): void {
+    const jwtSecret = getJwtSecret();
+    let payload: unknown;
 
-  if (payload.answer.toLowerCase() !== input.captchaAnswer.toLowerCase()) {
-    throw new FieldValidationError('captchaAnswer', CAPTCHA_ERROR_MESSAGE);
+    try {
+      payload = jwt.verify(input.captchaId, jwtSecret);
+    } catch {
+      throw new FieldValidationError('captchaAnswer', CAPTCHA_ERROR_MESSAGE);
+    }
+
+    if (!isCaptchaJwtPayload(payload)) {
+      throw new FieldValidationError('captchaAnswer', CAPTCHA_ERROR_MESSAGE);
+    }
+
+    if (payload.answer.toLowerCase() !== input.captchaAnswer.toLowerCase()) {
+      throw new FieldValidationError('captchaAnswer', CAPTCHA_ERROR_MESSAGE);
+    }
   }
-};
+}
+
+export const captchaService = new CaptchaService();

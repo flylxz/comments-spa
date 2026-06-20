@@ -4,7 +4,7 @@ import type {
   CreateCommentSchema,
   GetCommentsQuerySchema,
 } from '../schemas/comment.schema.js';
-import * as commentService from '../services/commentService.js';
+import { commentService } from '../services/commentService.js';
 import { emitNewComment } from '../services/websocketService.js';
 
 export const getComments = async (
