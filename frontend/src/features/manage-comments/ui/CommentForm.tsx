@@ -221,6 +221,7 @@ export const CommentForm = ({
     setValue,
     getValues,
     watch,
+    trigger,
     formState: { errors },
   } = useForm<CommentFormValues>({
     resolver: zodResolver(commentFormSchema),
@@ -376,13 +377,13 @@ export const CommentForm = ({
 
       {isExpanded ? (
         <div className="contents">
-          {showGlobalError ? (
+          {!!showGlobalError && (
             <p className="rounded-md bg-red-50 px-2.5 py-1.5 text-xs text-red-700">
               {error instanceof Error
                 ? error.message
                 : 'Failed to submit comment. Please try again.'}
             </p>
-          ) : null}
+          )}
 
           <div
             className={cn(
@@ -428,7 +429,11 @@ export const CommentForm = ({
               placeholder="https://example.com"
               disabled={isPending}
               className="h-8 text-sm"
-              {...register('homePage')}
+              {...register('homePage', {
+                onBlur: () => {
+                  void trigger('homePage');
+                },
+              })}
             />
             <FieldError message={errors.homePage?.message} />
           </div>

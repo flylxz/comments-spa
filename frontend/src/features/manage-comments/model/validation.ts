@@ -16,7 +16,7 @@ import { z } from 'zod';
 export const commentFormSchema = z.object({
   userName: createUserNameFieldSchema(FORM_FIELD_MESSAGES.userName),
   email: createEmailFieldSchema(FORM_FIELD_MESSAGES.email),
-  homePage: createHomePageFormFieldSchema(),
+  homePage: createHomePageFormFieldSchema(FORM_FIELD_MESSAGES.homePage),
   captchaId: createCaptchaIdFieldSchema(FORM_FIELD_MESSAGES.captchaId),
   captchaValue: createCaptchaAnswerFieldSchema(
     FORM_FIELD_MESSAGES.captchaAnswer,
