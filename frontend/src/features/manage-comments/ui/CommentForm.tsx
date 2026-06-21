@@ -116,6 +116,15 @@ const FieldLabel = ({
   </label>
 );
 
+const fieldHintClassName = 'text-[11px] leading-tight text-muted-foreground';
+
+const FieldHint = ({ children }: { children: string }) => (
+  <p className={fieldHintClassName}>{children}</p>
+);
+
+const formatCharacterCount = (length: number, max: number): string =>
+  `${length.toLocaleString('en-US')} / ${max.toLocaleString('en-US')}`;
+
 const boxVariants: Variants = {
   initial: { opacity: 0, y: -20 },
   animate: { opacity: 1, y: 0 },
@@ -336,6 +345,8 @@ export const CommentForm = ({
   };
 
   const commentText = watch('text');
+  const commentTextLength = commentText.length;
+  const isCommentTextAtLimit = commentTextLength >= MAX_COMMENT_TEXT_LENGTH;
 
   const isCaptchaBusy = isCaptchaLoading || isCaptchaFetching;
   const captchaErrorMessage =
@@ -410,6 +421,9 @@ export const CommentForm = ({
                 className="h-8 text-sm"
                 {...register('userName')}
               />
+              <FieldHint>
+                {`Letters and numbers only, max ${MAX_USER_NAME_LENGTH} characters`}
+              </FieldHint>
               <FieldError message={errors.userName?.message} />
             </div>
 
@@ -477,21 +491,37 @@ export const CommentForm = ({
               />
             )}
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-[11px] leading-tight text-muted-foreground">
+              <p className={fieldHintClassName}>
                 Allowed tags: &lt;a&gt;, &lt;code&gt;, &lt;i&gt;, &lt;strong&gt;
               </p>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-xs text-muted-foreground"
-                disabled={isPending}
-                onClick={() => {
-                  setIsPreviewOpen((open) => !open);
-                }}
-              >
-                {isPreviewOpen ? 'Edit' : 'Preview'}
-              </Button>
+              <div className="flex items-center gap-2">
+                <span
+                  role="status"
+                  aria-live="polite"
+                  className={cn(
+                    fieldHintClassName,
+                    'tabular-nums',
+                    isCommentTextAtLimit && 'text-red-600',
+                  )}
+                >
+                  {formatCharacterCount(
+                    commentTextLength,
+                    MAX_COMMENT_TEXT_LENGTH,
+                  )}
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-xs text-muted-foreground"
+                  disabled={isPending}
+                  onClick={() => {
+                    setIsPreviewOpen((open) => !open);
+                  }}
+                >
+                  {isPreviewOpen ? 'Edit' : 'Preview'}
+                </Button>
+              </div>
             </div>
             <FieldError message={errors.text?.message} />
           </div>
@@ -518,9 +548,9 @@ export const CommentForm = ({
                 />
               )}
             />
-            <p className="text-[11px] leading-tight text-muted-foreground">
+            <FieldHint>
               JPG, JPEG, GIF, PNG, or TXT (max 100 KB for TXT)
-            </p>
+            </FieldHint>
             <FieldError message={errors.file?.message} />
           </div>
 
