@@ -14,6 +14,7 @@ import {
   isCommentImageAttachment,
   resolveCommentFileUrl,
 } from '@/entities/comment/lib/resolveCommentFileUrl';
+import commentImageUnavailable from '@/shared/assets/comment-image-unavailable.png';
 import { interactiveFileChip } from '@/shared/lib/interactiveStyles';
 import { cn } from '@/shared/lib/utils';
 
@@ -35,7 +36,6 @@ export const CommentAttachment = ({
   const resolvedUrl = resolveCommentFileUrl(fileUrl);
   const displayFileName =
     storedFileName ?? getCommentAttachmentFileName(fileUrl);
-  const fileFormat = getCommentAttachmentFormat(displayFileName);
   const [fileSize, setFileSize] = useState<number | null>(() => {
     if (storedFileSize != null) {
       return storedFileSize;
@@ -45,6 +45,10 @@ export const CommentAttachment = ({
 
     return cached === undefined ? null : cached;
   });
+  const [unavailableImageUrl, setUnavailableImageUrl] = useState<string | null>(
+    null,
+  );
+  const imageLoadFailed = unavailableImageUrl === resolvedUrl;
 
   useEffect(() => {
     if (isCommentImageAttachment(fileUrl)) {
@@ -81,35 +85,67 @@ export const CommentAttachment = ({
   }, [fileUrl, resolvedUrl, storedFileSize]);
 
   if (isCommentImageAttachment(fileUrl)) {
+    const imageSrc = imageLoadFailed ? commentImageUnavailable : resolvedUrl;
+    const frameClassName =
+      'relative inline-block h-40 w-56 overflow-hidden rounded-xl border border-border bg-muted/30 shadow-sm';
+    const attachmentPreview = (
+      <img
+        src={imageSrc}
+        alt={
+          imageLoadFailed
+            ? 'Image unavailable'
+            : `Attachment for comment ${commentId}`
+        }
+        className={cn(
+          'h-full w-full',
+          imageLoadFailed
+            ? 'object-contain p-4 opacity-80'
+            : 'object-cover transition-transform duration-500 ease-out group-hover:scale-105',
+        )}
+        loading="lazy"
+        onError={() => {
+          setUnavailableImageUrl(resolvedUrl);
+        }}
+      />
+    );
+
     return (
       <div className={cn('mt-4', className)}>
-        <a
-          href={resolvedUrl}
-          data-lightbox={`comment-${commentId}`}
-          data-alt={`Attachment for comment ${commentId}`}
-          className="group relative inline-block h-40 w-56 cursor-zoom-in overflow-hidden rounded-xl border border-border bg-muted/30 shadow-sm transition-[transform,box-shadow] duration-300 ease-out hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
-          aria-label="View attached image"
-        >
-          <img
-            src={resolvedUrl}
-            alt={`Attachment for comment ${commentId}`}
-            className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-            loading="lazy"
-          />
-
-          <span
-            aria-hidden
-            className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-300 group-hover:bg-black/20"
+        {imageLoadFailed ? (
+          <div
+            className={frameClassName}
+            role="img"
+            aria-label="Image unavailable"
           >
-            <ZoomIn className="h-7 w-7 text-white opacity-0 drop-shadow-md transition-opacity duration-300 group-hover:opacity-100" />
-          </span>
-        </a>
+            {attachmentPreview}
+          </div>
+        ) : (
+          <a
+            href={resolvedUrl}
+            data-lightbox={`comment-${commentId}`}
+            data-alt={`Attachment for comment ${commentId}`}
+            className={cn(
+              frameClassName,
+              'group cursor-zoom-in transition-[transform,box-shadow] duration-300 ease-out hover:scale-[1.02] hover:shadow-md active:scale-[0.98]',
+            )}
+            aria-label="View attached image"
+          >
+            {attachmentPreview}
+
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-300 group-hover:bg-black/20"
+            >
+              <ZoomIn className="h-7 w-7 text-white opacity-0 drop-shadow-md transition-opacity duration-300 group-hover:opacity-100" />
+            </span>
+          </a>
+        )}
       </div>
     );
   }
 
   const metaParts = [
-    fileFormat,
+    getCommentAttachmentFormat(displayFileName),
     fileSize !== null ? formatCommentAttachmentSize(fileSize) : null,
   ].filter((part): part is string => Boolean(part));
 
