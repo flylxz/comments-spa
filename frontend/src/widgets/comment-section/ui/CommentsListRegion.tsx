@@ -1,7 +1,10 @@
 import {
   type Dispatch,
   type ReactNode,
+  type RefObject,
   type SetStateAction,
+  startTransition,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -16,15 +19,29 @@ import {
   normalizeCommentTree,
   useCommentsQuery,
 } from '@/entities/comment';
-import { CommentForm } from '@/features/manage-comments';
+import { findTopLevelCommentId } from '@/entities/comment/lib/findTopLevelCommentId';
+import {
+  SCROLL_LAYOUT_SETTLE_MS,
+  scrollToComment,
+  scrollToReplyFormIfObscured,
+} from '@/entities/comment/lib/scrollToComment';
+import { ReplyCommentForm } from '@/features/manage-comments/ui/ReplyCommentForm';
 import { cn } from '@/shared/lib/utils';
+
+const HIGHLIGHT_DURATION_MS = 2400;
 
 export type CommentsListRegionProps = {
   queryParams: GetCommentsParams;
   setQueryParams: Dispatch<SetStateAction<GetCommentsParams>>;
   replyingToCommentId: number | null;
   onReplyClick: (commentId: number) => void;
-  onReplyClose: () => void;
+  highlightedCommentId: number | null;
+  onHighlightComplete: () => void;
+  collapsedThreadIds: ReadonlySet<number>;
+  onToggleThreadCollapsed: (topLevelCommentId: number) => void;
+  onCommentCreated: (comment: Comment) => void;
+  skipNextPageScrollRef: RefObject<boolean>;
+  onEnsureThreadExpanded: (topLevelCommentId: number) => void;
 };
 
 export const CommentsListRegion = ({
@@ -32,7 +49,13 @@ export const CommentsListRegion = ({
   setQueryParams,
   replyingToCommentId,
   onReplyClick,
-  onReplyClose,
+  highlightedCommentId,
+  onHighlightComplete,
+  collapsedThreadIds,
+  onToggleThreadCollapsed,
+  onCommentCreated,
+  skipNextPageScrollRef,
+  onEnsureThreadExpanded,
 }: CommentsListRegionProps) => {
   const handleSortChange = (field: SortField): void => {
     setQueryParams((current) => getNextSortParams(current, field));
@@ -47,7 +70,31 @@ export const CommentsListRegion = ({
   const { data, isLoading, isFetching, isError, error } =
     useCommentsQuery(queryParams);
 
+  const comments = useMemo(
+    () => (data ? normalizeCommentTree(data.data) : []),
+    [data],
+  );
+
   const isInitialLoading = isLoading && !data;
+
+  const handleReplyClickWithScroll = useCallback(
+    (commentId: number): void => {
+      startTransition(() => {
+        const isClosing = replyingToCommentId === commentId;
+
+        if (!isClosing) {
+          const rootId = findTopLevelCommentId(comments, commentId);
+
+          if (rootId !== null) {
+            onEnsureThreadExpanded(rootId);
+          }
+        }
+
+        onReplyClick(commentId);
+      });
+    },
+    [replyingToCommentId, comments, onEnsureThreadExpanded, onReplyClick],
+  );
 
   useEffect(() => {
     if (previousPageRef.current === queryParams.page) {
@@ -55,15 +102,54 @@ export const CommentsListRegion = ({
     }
 
     previousPageRef.current = queryParams.page;
-    listRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, [queryParams.page]);
 
-  return (
-    <div
-      ref={listRef}
-      id="comments-list-region"
-      className="flex flex-col gap-4 scroll-mt-6"
-    >
+    if (skipNextPageScrollRef.current) {
+      skipNextPageScrollRef.current = false;
+      return;
+    }
+
+    listRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [queryParams.page, skipNextPageScrollRef]);
+
+  useEffect(() => {
+    if (highlightedCommentId === null) {
+      return;
+    }
+
+    const commentId = highlightedCommentId;
+    let highlightTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const scrollTimer = setTimeout(() => {
+      scrollToComment(commentId);
+      highlightTimer = setTimeout(onHighlightComplete, HIGHLIGHT_DURATION_MS);
+    }, SCROLL_LAYOUT_SETTLE_MS);
+
+    return () => {
+      clearTimeout(scrollTimer);
+      if (highlightTimer !== undefined) {
+        clearTimeout(highlightTimer);
+      }
+    };
+  }, [highlightedCommentId, onHighlightComplete]);
+
+  useEffect(() => {
+    if (replyingToCommentId === null) {
+      return;
+    }
+
+    const commentId = replyingToCommentId;
+
+    const scrollTimer = setTimeout(() => {
+      scrollToReplyFormIfObscured(commentId);
+    }, SCROLL_LAYOUT_SETTLE_MS);
+
+    return () => {
+      clearTimeout(scrollTimer);
+    };
+  }, [replyingToCommentId]);
+
+  const listRegionContent = (
+    <>
       {isInitialLoading ? (
         <div className="flex min-h-48 items-center justify-center rounded-lg border border-dashed border-border bg-muted">
           <p className="text-sm text-muted-foreground">Loading comments...</p>
@@ -95,13 +181,16 @@ export const CommentsListRegion = ({
           />
 
           <CommentsListContent
-            data={data.data}
+            comments={comments}
             queryParams={queryParams}
             onSortChange={handleSortChange}
             isFetching={isFetching}
             replyingToCommentId={replyingToCommentId}
-            onReplyClick={onReplyClick}
-            onReplyClose={onReplyClose}
+            onReplyClick={handleReplyClickWithScroll}
+            highlightedCommentId={highlightedCommentId}
+            collapsedThreadIds={collapsedThreadIds}
+            onToggleThreadCollapsed={onToggleThreadCollapsed}
+            onCommentCreated={onCommentCreated}
           />
 
           {data.pagination.totalPages > 1 ? (
@@ -116,42 +205,56 @@ export const CommentsListRegion = ({
           ) : null}
         </>
       ) : null}
+    </>
+  );
+
+  return (
+    <div
+      ref={listRef}
+      id="comments-list-region"
+      className="flex flex-col gap-4 scroll-mt-6"
+    >
+      {listRegionContent}
     </div>
   );
 };
 
 type CommentsListContentProps = {
-  data: Comment[];
+  comments: Comment[];
   queryParams: GetCommentsParams;
   onSortChange: (field: SortField) => void;
   isFetching: boolean;
   replyingToCommentId: number | null;
   onReplyClick: (commentId: number) => void;
-  onReplyClose: () => void;
+  highlightedCommentId: number | null;
+  collapsedThreadIds: ReadonlySet<number>;
+  onToggleThreadCollapsed: (topLevelCommentId: number) => void;
+  onCommentCreated: (comment: Comment) => void;
 };
 
 const createReplyFormRenderer = (
-  onReplyClose: () => void,
+  onCommentCreated: (comment: Comment) => void,
 ): ((commentId: number) => ReactNode) => {
   return (commentId: number): ReactNode => (
-    <CommentForm parentId={commentId} onSuccess={onReplyClose} />
+    <ReplyCommentForm parentId={commentId} onSuccess={onCommentCreated} />
   );
 };
 
 const CommentsListContent = ({
-  data,
+  comments,
   queryParams,
   onSortChange,
   isFetching,
   replyingToCommentId,
   onReplyClick,
-  onReplyClose,
+  highlightedCommentId,
+  collapsedThreadIds,
+  onToggleThreadCollapsed,
+  onCommentCreated,
 }: CommentsListContentProps) => {
-  const comments = useMemo(() => normalizeCommentTree(data), [data]);
-
   const renderReplyForm = useMemo(
-    () => createReplyFormRenderer(onReplyClose),
-    [onReplyClose],
+    () => createReplyFormRenderer(onCommentCreated),
+    [onCommentCreated],
   );
 
   if (comments.length === 0) {
@@ -179,6 +282,9 @@ const CommentsListContent = ({
         replyingToCommentId={replyingToCommentId}
         onReplyClick={onReplyClick}
         renderReplyForm={renderReplyForm}
+        highlightedCommentId={highlightedCommentId}
+        collapsedThreadIds={collapsedThreadIds}
+        onToggleThreadCollapsed={onToggleThreadCollapsed}
       />
     </div>
   );

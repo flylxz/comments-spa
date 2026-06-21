@@ -79,3 +79,21 @@
   --lb-image-padding: 24px;
   --lb-backdrop-color: rgba(0, 0, 0, 0.92);
 }
+
+@keyframes comment-highlight-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0.35);
+    border-color: hsl(var(--primary) / 0.6);
+  }
+
+  50% {
+    box-shadow: 0 0 0 6px hsl(var(--primary) / 0.15);
+    border-color: hsl(var(--primary));
+  }
+}
+
+.comment-highlight {
+  animation: comment-highlight-pulse 1.2s ease-in-out 2;
+  border-color: hsl(var(--primary));
+}
