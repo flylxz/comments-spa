@@ -9,5 +9,5 @@ export interface VerifyCaptchaInput {
 }
 
 export interface CaptchaJwtPayload {
-  answer: string;
+  id: string;
 }
