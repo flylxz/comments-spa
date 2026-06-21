@@ -23,3 +23,13 @@ export const createCommentRateLimiter = rateLimit({
     'Too many comment submissions, please try again later',
   ),
 });
+
+export const getCommentsRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: rateLimitMessage(
+    'Too many comment list requests, please try again later',
+  ),
+});

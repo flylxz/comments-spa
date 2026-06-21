@@ -31,6 +31,12 @@ export const MAX_UPLOAD_SIZE_BYTES = 5 * 1024 * 1024;
 export const MAX_IMAGE_WIDTH = 320;
 export const MAX_IMAGE_HEIGHT = 240;
 
+/** Max lengths for comment form fields (DoS / storage bounds). */
+export const MAX_USER_NAME_LENGTH = 64;
+export const MAX_EMAIL_LENGTH = 254;
+export const MAX_HOME_PAGE_LENGTH = 2048;
+export const MAX_COMMENT_TEXT_LENGTH = 10_000;
+
 export const USER_NAME_PATTERN = /^[a-zA-Z0-9]+$/;
 
 export const CAPTCHA_ANSWER_PATTERN = /^[a-zA-Z0-9]+$/;

@@ -8,14 +8,19 @@ export {
   CAPTCHA_CHAR_PRESET,
   getFileExtension,
   isAllowedFileMeta,
+  MAX_COMMENT_TEXT_LENGTH,
+  MAX_EMAIL_LENGTH,
+  MAX_HOME_PAGE_LENGTH,
   MAX_IMAGE_HEIGHT,
   MAX_IMAGE_WIDTH,
   MAX_TXT_FILE_SIZE_BYTES,
   MAX_UPLOAD_SIZE_BYTES,
+  MAX_USER_NAME_LENGTH,
   USER_NAME_PATTERN,
 } from './comment/constants.js';
 
 export type {
+  BoundedStringMessages,
   CaptchaAnswerFieldMessages,
   EmailFieldMessages,
   HomePageApiFieldMessages,
