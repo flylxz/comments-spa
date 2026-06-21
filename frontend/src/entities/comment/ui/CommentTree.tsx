@@ -4,11 +4,13 @@ import {
   memo,
   type ReactNode,
   startTransition,
+  useCallback,
   useMemo,
-  useState,
 } from 'react';
 
 import { countCommentReplies } from '@/entities/comment/lib/countCommentReplies';
+import { isCommentInTree } from '@/entities/comment/lib/isCommentInTree';
+import { getReplyFormElementId } from '@/entities/comment/lib/scrollToComment';
 import type { Comment } from '@/entities/comment/model/types';
 import { Button } from '@/shared/ui/button';
 
@@ -21,11 +23,19 @@ export type CommentTreeProps = {
   replyingToCommentId?: number | null;
   renderReplyForm?: (commentId: number) => ReactNode;
   initialDepth?: number;
+  highlightedCommentId?: number | null;
+  collapsedThreadIds?: ReadonlySet<number>;
+  onToggleThreadCollapsed?: (topLevelCommentId: number) => void;
 };
+
+const EMPTY_COLLAPSED_THREAD_IDS = new Set<number>();
 
 type SharedTreeProps = Pick<
   CommentTreeProps,
-  'onReplyClick' | 'replyingToCommentId' | 'renderReplyForm'
+  | 'onReplyClick'
+  | 'replyingToCommentId'
+  | 'renderReplyForm'
+  | 'highlightedCommentId'
 >;
 
 type CommentTreeNodeProps = SharedTreeProps & {
@@ -34,6 +44,8 @@ type CommentTreeNodeProps = SharedTreeProps & {
 
 type TopLevelCommentThreadProps = SharedTreeProps & {
   comment: Comment;
+  isRepliesCollapsed: boolean;
+  onToggleThreadCollapsed?: (topLevelCommentId: number) => void;
 };
 
 const treeVariants: Variants = {
@@ -51,21 +63,30 @@ const replyFormVariants: Variants = {
   exit: { opacity: 0, y: -12 },
 };
 
-const isCommentInTree = (root: Comment, targetId: number): boolean => {
-  if (root.id === targetId) {
-    return true;
-  }
-
-  return (
-    root.replies?.some((reply) => isCommentInTree(reply, targetId)) ?? false
-  );
+type ReplyFormSlotProps = {
+  commentId: number;
+  renderReplyForm: (commentId: number) => ReactNode;
 };
 
-const CommentTreeNode = ({
+const ReplyFormSlot = ({ commentId, renderReplyForm }: ReplyFormSlotProps) => (
+  <motion.div
+    id={getReplyFormElementId(commentId)}
+    className="scroll-mt-6"
+    variants={replyFormVariants}
+    initial="initial"
+    animate="animate"
+    exit="exit"
+  >
+    {renderReplyForm(commentId)}
+  </motion.div>
+);
+
+const CommentTreeNodeComponent = ({
   comments,
   onReplyClick,
   replyingToCommentId = null,
   renderReplyForm,
+  highlightedCommentId = null,
 }: CommentTreeNodeProps) => (
   <div className="flex flex-col gap-4">
     {comments.map((comment, index) => {
@@ -75,28 +96,29 @@ const CommentTreeNode = ({
       return (
         <CommentThreadBranch key={comment.id} isLast={isLast}>
           <div className="flex flex-col gap-4">
-            <CommentCard comment={comment} onReplyClick={onReplyClick} />
+            <CommentCard
+              comment={comment}
+              onReplyClick={onReplyClick}
+              isHighlighted={highlightedCommentId === comment.id}
+            />
 
             <AnimatePresence initial={false}>
-              {replyingToCommentId === comment.id && renderReplyForm ? (
-                <motion.div
+              {replyingToCommentId === comment.id && renderReplyForm && (
+                <ReplyFormSlot
                   key={`reply-form-${comment.id}`}
-                  variants={replyFormVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                >
-                  {renderReplyForm(comment.id)}
-                </motion.div>
-              ) : null}
+                  commentId={comment.id}
+                  renderReplyForm={renderReplyForm}
+                />
+              )}
             </AnimatePresence>
 
             {hasReplies ? (
-              <CommentTreeNode
+              <MemoizedCommentTreeNode
                 comments={comment.replies ?? []}
                 onReplyClick={onReplyClick}
                 replyingToCommentId={replyingToCommentId}
                 renderReplyForm={renderReplyForm}
+                highlightedCommentId={highlightedCommentId}
               />
             ) : null}
           </div>
@@ -106,38 +128,42 @@ const CommentTreeNode = ({
   </div>
 );
 
+const MemoizedCommentTreeNode = memo(CommentTreeNodeComponent);
+
 const TopLevelCommentThread = ({
   comment,
   onReplyClick,
   replyingToCommentId = null,
   renderReplyForm,
+  highlightedCommentId = null,
+  isRepliesCollapsed,
+  onToggleThreadCollapsed,
 }: TopLevelCommentThreadProps) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const replyCount = useMemo(() => countCommentReplies(comment), [comment]);
   const hasReplies = replyCount > 0;
 
-  const handleToggleReplies = (): void => {
+  const handleToggleReplies = useCallback((): void => {
     startTransition(() => {
-      setIsCollapsed((current) => !current);
+      onToggleThreadCollapsed?.(comment.id);
     });
-  };
+  }, [onToggleThreadCollapsed, comment.id]);
 
   return (
     <div className="flex flex-col gap-4">
-      <CommentCard comment={comment} onReplyClick={onReplyClick} />
+      <CommentCard
+        comment={comment}
+        onReplyClick={onReplyClick}
+        isHighlighted={highlightedCommentId === comment.id}
+      />
 
       <AnimatePresence initial={false}>
-        {replyingToCommentId === comment.id && renderReplyForm ? (
-          <motion.div
+        {replyingToCommentId === comment.id && renderReplyForm && (
+          <ReplyFormSlot
             key={`reply-form-${comment.id}`}
-            variants={replyFormVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-          >
-            {renderReplyForm(comment.id)}
-          </motion.div>
-        ) : null}
+            commentId={comment.id}
+            renderReplyForm={renderReplyForm}
+          />
+        )}
       </AnimatePresence>
 
       {hasReplies ? (
@@ -146,27 +172,28 @@ const TopLevelCommentThread = ({
           size="sm"
           className="h-auto w-fit gap-1.5 px-1 -ml-1 text-muted-foreground"
           onClick={handleToggleReplies}
-          aria-expanded={!isCollapsed}
+          aria-expanded={!isRepliesCollapsed}
           aria-controls={`comment-replies-${comment.id}`}
         >
-          {isCollapsed ? (
+          {isRepliesCollapsed ? (
             <ChevronDown className="h-4 w-4" />
           ) : (
             <ChevronUp className="h-4 w-4" />
           )}
-          {isCollapsed
+          {isRepliesCollapsed
             ? `Show ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`
             : `Hide ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`}
         </Button>
       ) : null}
 
       {hasReplies && comment.replies ? (
-        <div id={`comment-replies-${comment.id}`} hidden={isCollapsed}>
-          <CommentTreeNode
+        <div id={`comment-replies-${comment.id}`} hidden={isRepliesCollapsed}>
+          <MemoizedCommentTreeNode
             comments={comment.replies}
             onReplyClick={onReplyClick}
             replyingToCommentId={replyingToCommentId}
             renderReplyForm={renderReplyForm}
+            highlightedCommentId={highlightedCommentId}
           />
         </div>
       ) : null}
@@ -182,14 +209,18 @@ export const CommentTree = ({
   replyingToCommentId = null,
   renderReplyForm,
   initialDepth = 0,
+  highlightedCommentId = null,
+  collapsedThreadIds = EMPTY_COLLAPSED_THREAD_IDS,
+  onToggleThreadCollapsed,
 }: CommentTreeProps) => {
   if (initialDepth > 0) {
     return (
-      <CommentTreeNode
+      <MemoizedCommentTreeNode
         comments={comments}
         onReplyClick={onReplyClick}
         replyingToCommentId={replyingToCommentId}
         renderReplyForm={renderReplyForm}
+        highlightedCommentId={highlightedCommentId}
       />
     );
   }
@@ -215,6 +246,9 @@ export const CommentTree = ({
             onReplyClick={onReplyClick}
             replyingToCommentId={threadReplyingToCommentId}
             renderReplyForm={renderReplyForm}
+            highlightedCommentId={highlightedCommentId}
+            isRepliesCollapsed={collapsedThreadIds.has(comment.id)}
+            onToggleThreadCollapsed={onToggleThreadCollapsed}
           />
         );
       })}

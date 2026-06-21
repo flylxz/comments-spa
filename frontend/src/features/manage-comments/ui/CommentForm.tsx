@@ -6,6 +6,7 @@ import { motion, type Variants } from 'motion/react';
 import { type RefObject, useEffect, useRef, useState } from 'react';
 import { type Control, Controller, useForm } from 'react-hook-form';
 import { sanitizeCommentHtml } from '@/entities/comment/lib/sanitizeCommentHtml';
+import type { Comment } from '@/entities/comment/model/types';
 import { useCaptchaQuery } from '@/features/manage-comments/api/useCaptchaQuery';
 import { useCreateCommentMutation } from '@/features/manage-comments/api/useCreateCommentMutation';
 import {
@@ -82,7 +83,7 @@ const CaptchaImage = ({ image, compact = false }: CaptchaImageProps) => (
 
 export type CommentFormProps = {
   parentId?: number | null;
-  onSuccess?: () => void;
+  onSuccess?: (comment: Comment) => void;
 };
 
 const FieldError = ({ message }: { message?: string }) => (
@@ -292,12 +293,12 @@ export const CommentForm = ({
     }
 
     mutate(formData, {
-      onSuccess: async () => {
+      onSuccess: async (createdComment) => {
         reset(getDefaultValues(parentId));
         setIsPreviewOpen(false);
         setValue('captchaValue', '');
         await refreshCaptchaChallenge();
-        onSuccess?.();
+        onSuccess?.(createdComment);
       },
       onError: handleSubmissionError,
     });

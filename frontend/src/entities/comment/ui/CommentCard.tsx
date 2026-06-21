@@ -9,6 +9,7 @@ import { memo } from 'react';
 
 import { formatCommentDate } from '@/entities/comment/lib/formatCommentDate';
 import { sanitizeCommentHtml } from '@/entities/comment/lib/sanitizeCommentHtml';
+import { getCommentElementId } from '@/entities/comment/lib/scrollToComment';
 import type { Comment } from '@/entities/comment/model/types';
 import { CommentAttachment } from '@/entities/comment/ui/CommentAttachment';
 import { interactiveIconButton } from '@/shared/lib/interactiveStyles';
@@ -19,6 +20,7 @@ import { Button } from '@/shared/ui/button';
 export type CommentCardProps = {
   comment: Comment;
   onReplyClick?: (commentId: number) => void;
+  isHighlighted?: boolean;
 };
 
 const getInitials = (userName: string): string => {
@@ -32,7 +34,11 @@ const getInitials = (userName: string): string => {
   return userName.slice(0, 2).toUpperCase();
 };
 
-const CommentCardComponent = ({ comment, onReplyClick }: CommentCardProps) => {
+const CommentCardComponent = ({
+  comment,
+  onReplyClick,
+  isHighlighted = false,
+}: CommentCardProps) => {
   const safeHtml = comment.sanitizedText ?? sanitizeCommentHtml(comment.text);
 
   const handleReplyClick = (): void => {
@@ -41,8 +47,11 @@ const CommentCardComponent = ({ comment, onReplyClick }: CommentCardProps) => {
 
   return (
     <article
-      id={`comment-${comment.id}`}
-      className="rounded-lg border border-border bg-card p-4 text-card-foreground shadow-sm"
+      id={getCommentElementId(comment.id)}
+      className={cn(
+        'scroll-mt-6 rounded-lg border border-border bg-card p-4 text-card-foreground shadow-sm',
+        isHighlighted && 'comment-highlight',
+      )}
     >
       <header
         className={cn(
@@ -69,7 +78,7 @@ const CommentCardComponent = ({ comment, onReplyClick }: CommentCardProps) => {
 
         <div className="flex shrink-0 items-center gap-1">
           <a
-            href={`#comment-${comment.id}`}
+            href={`#${getCommentElementId(comment.id)}`}
             className={interactiveIconButton}
             aria-label="Permalink"
           >
