@@ -1,6 +1,5 @@
+import { ALLOWED_COMMENT_TAGS } from './constants.js';
 import { isAllowedLinkHref } from './isAllowedLinkHref.js';
-
-export const ALLOWED_COMMENT_TAGS = ['a', 'code', 'i', 'strong'] as const;
 
 type AllowedCommentTag = (typeof ALLOWED_COMMENT_TAGS)[number];
 

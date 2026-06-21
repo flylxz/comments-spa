@@ -1,3 +1,7 @@
+import {
+  createCommentSchema,
+  getCommentsQuerySchema,
+} from '@comments-spa/shared';
 import { Router } from 'express';
 
 import {
@@ -11,10 +15,6 @@ import {
 } from '../middlewares/uploadMiddleware.js';
 import { validateBody } from '../middlewares/validateBody.js';
 import { validateQuery } from '../middlewares/validateQuery.js';
-import {
-  createCommentSchema,
-  getCommentsQuerySchema,
-} from '../schemas/comment.schema.js';
 
 const commentRoutes = Router();
 

@@ -15,6 +15,7 @@
       "name": "comments-spa-backend",
       "version": "1.0.0",
       "dependencies": {
+        "@comments-spa/shared": "workspace:*",
         "@prisma/adapter-pg": "^7.8.0",
         "@prisma/client": "^7.8.0",
         "dotenv": "^17.4.2",
@@ -46,6 +47,7 @@
       "name": "comments-spa-frontend",
       "version": "0.0.0",
       "dependencies": {
+        "@comments-spa/shared": "workspace:*",
         "@hookform/resolvers": "^5.2.2",
         "@tanstack/react-query": "^5.90.12",
         "axios": "^1.13.2",
@@ -75,6 +77,16 @@
         "tailwindcss": "^4.3.1",
         "typescript": "catalog:",
         "vite": "^7.3.0",
+      },
+    },
+    "packages/shared": {
+      "name": "@comments-spa/shared",
+      "version": "1.0.0",
+      "dependencies": {
+        "zod": "catalog:",
+      },
+      "devDependencies": {
+        "typescript": "catalog:",
       },
     },
   },
@@ -148,6 +160,8 @@
     "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@2.5.0", "", { "os": "win32", "cpu": "x64" }, "sha512-VT/lF+GId+67j8aDfLkxdxNoVApsPSTbyAtB3jJq0IWTrY77WXfbPfpngxq0bA6JCEv/7k8C9qWjDRKRznDlyw=="],
 
     "@colors/colors": ["@colors/colors@1.5.0", "", {}, "sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ=="],
+
+    "@comments-spa/shared": ["@comments-spa/shared@workspace:packages/shared"],
 
     "@electric-sql/pglite": ["@electric-sql/pglite@0.4.1", "", {}, "sha512-mZ9NzzUSYPOCnxHH1oAHPRzoMFJHY472raDKwXl/+6oPbpdJ7g8LsCN4FSaIIfkiCKHhb3iF/Zqo3NYxaIhU7Q=="],
 

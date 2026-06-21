@@ -1,7 +1,12 @@
+import {
+  ALLOWED_ANCHOR_INPUT_ATTRIBUTES,
+  ALLOWED_COMMENT_TAGS,
+  ALLOWED_LINK_URI_REGEXP,
+  EXTERNAL_LINK_REL,
+  EXTERNAL_LINK_TARGET,
+  isExternalHttpLinkHref,
+} from '@comments-spa/shared';
 import DOMPurify from 'dompurify';
-
-import { isExternalHttpLinkHref } from '@/entities/comment/lib/isAllowedLinkHref';
-import { ALLOWED_COMMENT_TAGS } from '@/entities/comment/lib/validateCommentHtml';
 
 const secureExternalLinksHook = (node: Element): void => {
   if (node.tagName !== 'A' || !node.hasAttribute('href')) {
@@ -14,8 +19,8 @@ const secureExternalLinksHook = (node: Element): void => {
     return;
   }
 
-  node.setAttribute('target', '_blank');
-  node.setAttribute('rel', 'noopener noreferrer');
+  node.setAttribute('target', EXTERNAL_LINK_TARGET);
+  node.setAttribute('rel', EXTERNAL_LINK_REL);
 };
 
 export const sanitizeCommentHtml = (html: string): string => {
@@ -24,8 +29,8 @@ export const sanitizeCommentHtml = (html: string): string => {
   try {
     return DOMPurify.sanitize(html, {
       ALLOWED_TAGS: [...ALLOWED_COMMENT_TAGS],
-      ALLOWED_ATTR: ['href', 'title'],
-      ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto):[^\s]*|)$/i,
+      ALLOWED_ATTR: [...ALLOWED_ANCHOR_INPUT_ATTRIBUTES],
+      ALLOWED_URI_REGEXP: ALLOWED_LINK_URI_REGEXP,
     });
   } finally {
     DOMPurify.removeHook('afterSanitizeAttributes', secureExternalLinksHook);

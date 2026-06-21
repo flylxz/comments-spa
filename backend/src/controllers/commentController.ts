@@ -1,9 +1,9 @@
-import type { NextFunction, Request, Response } from 'express';
-import { getValidatedQuery } from '../middlewares/validateQuery.js';
 import type {
   CreateCommentSchema,
   GetCommentsQuerySchema,
-} from '../schemas/comment.schema.js';
+} from '@comments-spa/shared';
+import type { NextFunction, Request, Response } from 'express';
+import { getValidatedQuery } from '../middlewares/validateQuery.js';
 import { commentService } from '../services/commentService.js';
 import { emitNewComment } from '../services/websocketService.js';
 

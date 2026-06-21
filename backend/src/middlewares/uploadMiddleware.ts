@@ -3,27 +3,25 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  ALLOWED_FILE_EXTENSIONS,
+  ALLOWED_UPLOAD_MIME_TYPES,
+  MAX_IMAGE_HEIGHT,
+  MAX_IMAGE_WIDTH,
+  MAX_TXT_FILE_SIZE_BYTES,
+  MAX_UPLOAD_SIZE_BYTES,
+} from '@comments-spa/shared';
 import type { NextFunction, Request, Response } from 'express';
 import multer, { MulterError } from 'multer';
 import sharp from 'sharp';
 
 import { FieldValidationError } from '../errors/fieldValidationError.js';
 
-const MAX_TXT_SIZE_BYTES = 100 * 1024;
-const MAX_UPLOAD_SIZE_BYTES = 5 * 1024 * 1024;
-const MAX_IMAGE_WIDTH = 320;
-const MAX_IMAGE_HEIGHT = 240;
-
 const ALLOWED_IMAGE_FORMATS = new Set(['jpeg', 'png', 'gif']);
 
-const ALLOWED_MIME_TYPES = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'text/plain',
-]);
+const ALLOWED_MIME_TYPES = new Set<string>(ALLOWED_UPLOAD_MIME_TYPES);
 
-const ALLOWED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.gif', '.png', '.txt']);
+const ALLOWED_EXTENSIONS = new Set<string>(ALLOWED_FILE_EXTENSIONS);
 
 const UPLOADS_DIR = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -102,7 +100,7 @@ const saveTextFile = async (
   buffer: Buffer,
   extension: string,
 ): Promise<string> => {
-  if (buffer.length > MAX_TXT_SIZE_BYTES) {
+  if (buffer.length > MAX_TXT_FILE_SIZE_BYTES) {
     throw new FieldValidationError(
       'file',
       'TXT file size must not exceed 100 KB',

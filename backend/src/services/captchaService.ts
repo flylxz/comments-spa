@@ -1,8 +1,7 @@
+import { CAPTCHA_CHAR_PRESET } from '@comments-spa/shared';
 import jwt from 'jsonwebtoken';
 import svgCaptcha from 'svg-captcha';
-
 import { FieldValidationError } from '../errors/fieldValidationError.js';
-import { CAPTCHA_CHAR_PRESET } from '../lib/captchaValidation.js';
 import { getJwtSecret } from '../lib/env.js';
 import type {
   CaptchaJwtPayload,

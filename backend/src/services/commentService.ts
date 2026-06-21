@@ -1,29 +1,36 @@
-import sanitizeHtml from 'sanitize-html';
-import { FieldValidationError } from '../errors/fieldValidationError.js';
-import { isExternalHttpLinkHref } from '../lib/isAllowedLinkHref.js';
-import { validateCommentHtml } from '../lib/validateCommentHtml.js';
-import {
-  type CommentRepository,
-  commentRepository,
-} from '../repositories/commentRepository.js';
 import type {
   Comment,
   CreateCommentInput,
   PaginatedCommentsQuery,
   PaginatedCommentsResult,
-} from '../types/comment.interface.js';
-import { type CaptchaService, captchaService } from './captchaService.js';
+} from '@comments-spa/shared';
 
-const ALLOWED_TAGS = ['a', 'code', 'i', 'strong'] as const;
+import {
+  ALLOWED_ANCHOR_SANITIZED_ATTRIBUTES,
+  ALLOWED_COMMENT_TAGS,
+  ALLOWED_LINK_SCHEMES,
+  EXTERNAL_LINK_REL,
+  EXTERNAL_LINK_TARGET,
+  isExternalHttpLinkHref,
+  LINK_SCHEME_ATTRIBUTES,
+  validateCommentHtml,
+} from '@comments-spa/shared';
+import sanitizeHtml from 'sanitize-html';
+import { FieldValidationError } from '../errors/fieldValidationError.js';
+import {
+  type CommentRepository,
+  commentRepository,
+} from '../repositories/commentRepository.js';
+import { type CaptchaService, captchaService } from './captchaService.js';
 
 const sanitizeCommentText = (text: string): string =>
   sanitizeHtml(text, {
-    allowedTags: [...ALLOWED_TAGS],
+    allowedTags: [...ALLOWED_COMMENT_TAGS],
     allowedAttributes: {
-      a: ['href', 'title', 'target', 'rel'],
+      a: [...ALLOWED_ANCHOR_SANITIZED_ATTRIBUTES],
     },
-    allowedSchemes: ['http', 'https', 'mailto'],
-    allowedSchemesAppliedToAttributes: ['href'],
+    allowedSchemes: [...ALLOWED_LINK_SCHEMES],
+    allowedSchemesAppliedToAttributes: [...LINK_SCHEME_ATTRIBUTES],
     disallowedTagsMode: 'discard',
     transformTags: {
       a: (tagName, attribs) => {
@@ -37,8 +44,8 @@ const sanitizeCommentText = (text: string): string =>
           tagName,
           attribs: {
             ...attribs,
-            target: '_blank',
-            rel: 'noopener noreferrer',
+            target: EXTERNAL_LINK_TARGET,
+            rel: EXTERNAL_LINK_REL,
           },
         };
       },
