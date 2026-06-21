@@ -7,10 +7,11 @@ COPY backend/package.json ./backend/
 COPY frontend/package.json ./frontend/
 COPY packages/shared/package.json ./packages/shared/
 
-RUN bun install --frozen-lockfile --filter comments-spa-frontend
+RUN bun install --frozen-lockfile --ignore-scripts --filter comments-spa-frontend
 
 COPY frontend ./frontend
 COPY packages/shared ./packages/shared
+COPY tsconfig.base.json ./
 
 ENV VITE_API_URL=/api
 
@@ -28,7 +29,7 @@ COPY packages/shared/package.json ./packages/shared/
 COPY backend/prisma ./backend/prisma
 COPY backend/prisma.config.ts ./backend/
 
-RUN bun install --frozen-lockfile --production --filter comments-spa-backend
+RUN bun install --frozen-lockfile --production --ignore-scripts --filter comments-spa-backend
 
 FROM oven/bun:1.3 AS backend-build
 
@@ -41,10 +42,11 @@ COPY packages/shared/package.json ./packages/shared/
 COPY backend/prisma ./backend/prisma
 COPY backend/prisma.config.ts ./backend/
 
-RUN bun install --frozen-lockfile --filter comments-spa-backend
+RUN bun install --frozen-lockfile --ignore-scripts --filter comments-spa-backend
 
 COPY backend ./backend
 COPY packages/shared ./packages/shared
+COPY tsconfig.base.json ./
 
 WORKDIR /app/backend
 RUN bun run build
