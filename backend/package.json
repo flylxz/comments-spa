@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun --watch src/app.ts",
-    "build": "prisma generate && tsc",
+    "build": "bun --filter @comments-spa/shared build && prisma generate && tsc",
     "start": "bun dist/app.js",
     "typecheck": "tsc --noEmit",
     "prisma:generate": "prisma generate",
@@ -13,6 +13,7 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@comments-spa/shared": "workspace:*",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "dotenv": "^17.4.2",

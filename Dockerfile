@@ -5,10 +5,12 @@ WORKDIR /app
 COPY package.json bun.lock ./
 COPY backend/package.json ./backend/
 COPY frontend/package.json ./frontend/
+COPY packages/shared/package.json ./packages/shared/
 
 RUN bun install --frozen-lockfile --filter comments-spa-frontend
 
 COPY frontend ./frontend
+COPY packages/shared ./packages/shared
 
 ENV VITE_API_URL=/api
 
@@ -22,6 +24,7 @@ WORKDIR /app
 COPY package.json bun.lock ./
 COPY backend/package.json ./backend/
 COPY frontend/package.json ./frontend/
+COPY packages/shared/package.json ./packages/shared/
 COPY backend/prisma ./backend/prisma
 COPY backend/prisma.config.ts ./backend/
 
@@ -34,12 +37,14 @@ WORKDIR /app
 COPY package.json bun.lock ./
 COPY backend/package.json ./backend/
 COPY frontend/package.json ./frontend/
+COPY packages/shared/package.json ./packages/shared/
 COPY backend/prisma ./backend/prisma
 COPY backend/prisma.config.ts ./backend/
 
 RUN bun install --frozen-lockfile --filter comments-spa-backend
 
 COPY backend ./backend
+COPY packages/shared ./packages/shared
 
 WORKDIR /app/backend
 RUN bun run build
@@ -57,6 +62,7 @@ RUN apt-get update \
 
 COPY --from=backend-deps /app/node_modules /app/node_modules
 COPY --from=backend-deps /app/backend/node_modules ./node_modules
+COPY --from=backend-build /app/packages/shared /app/packages/shared
 COPY --from=backend-build /app/backend/dist ./dist
 COPY --from=backend-build /app/backend/prisma ./prisma
 COPY --from=backend-build /app/backend/prisma.config.ts ./prisma.config.ts

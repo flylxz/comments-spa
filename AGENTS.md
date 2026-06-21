@@ -9,10 +9,11 @@ Code-style rules scoped by file type live in `.cursor/rules/*.mdc`.
 Comments SPA — a single-page app for posting and viewing comments with cascading
 replies, CAPTCHA, file uploads, and real-time list updates over WebSocket.
 
-It is a **Bun workspaces monorepo** with two packages:
+It is a **Bun workspaces monorepo** with three packages:
 
 - `frontend/` — React 19 SPA (Vite, TanStack Query, Tailwind, shadcn/ui)
 - `backend/` — Express 5 API (Bun, Prisma, PostgreSQL, Socket.IO)
+- `packages/shared/` — `@comments-spa/shared`: isomorphic types, constants, Zod schemas, validators, sanitization policy
 
 ## Tech Stack
 
@@ -21,6 +22,7 @@ It is a **Bun workspaces monorepo** with two packages:
 | Frontend       | React 19, TypeScript, Vite, TanStack Query, Tailwind CSS, shadcn/ui, DOMPurify, Socket.IO client |
 | Backend        | Express 5, TypeScript, Bun, Prisma ORM, PostgreSQL, Socket.IO, sanitize-html, sharp, multer, svg-captcha, JWT |
 | Infrastructure | Docker, nginx, docker-compose, Taskfile, Render Blueprint                                       |
+| Shared         | Zod — comment types, field schemas, `validateCommentHtml`, upload/CAPTCHA constants, sanitization policy |
 | Tooling        | Bun 1.3+ (package manager), Biome (lint/format), Husky + lint-staged, jscpd                      |
 
 ## Setup & Commands
@@ -32,7 +34,7 @@ not use `npm`, `yarn`, or `pnpm`.
 task setup        # first-time setup: .env, deps, Postgres, migrations
 task dev          # run frontend (:5173) + backend (:3000) in parallel
 task verify       # lint + typecheck — REQUIRED before finishing any change
-task build        # production build of both packages
+task build        # production build: shared → frontend → backend
 task db:seed      # seed 100 top-level comments
 task db:migrate   # apply Prisma migrations (dev)
 task db:generate  # regenerate Prisma client after schema changes
@@ -63,9 +65,9 @@ and jscpd on staged files.
 Routing → Controllers → Services → Repositories → Prisma
 ```
 
-- Folders: `backend/src/{routes,controllers,services,repositories,middlewares,schemas,lib,types}`.
+- Folders: `backend/src/{routes,controllers,services,repositories,middlewares,lib,types}`.
 - OOP service classes: `CommentService`, `CommentRepository`, `CaptchaService`, `WebsocketService`.
-- Input validation uses **Zod** schemas (`backend/src/schemas`) via validation middleware.
+- Input validation uses **Zod** schemas from `@comments-spa/shared` via validation middleware.
 - Creating a comment emits a `comments:new` Socket.IO event.
 - Errors are forwarded to the centralized error-handling middleware
   (`backend/src/middlewares/errorHandler.ts`) — never swallow errors silently.
@@ -81,6 +83,18 @@ frontend/src/{app,widgets,features,entities,shared}
   `invalidateQueries`. Real-time subscription: `useCommentSocket`.
 - Forms use `react-hook-form` + Zod; do not build forms from many manual `useState`.
 - Local sub-components live inside their feature slice, not the global `shared/ui`.
+
+### Shared — `@comments-spa/shared`
+
+```
+packages/shared/src/comment/
+```
+
+- **Isomorphic only** — no Node APIs (`fs`, `multer`), no React/DOM beyond `URL`.
+- Compiled to `dist/` via `tsc` (`NodeNext`, `.js` import suffixes in source).
+- Import: `import { createCommentSchema, validateCommentHtml } from '@comments-spa/shared'`.
+- Frontend extends shared schemas for client-only fields (`File`, `captchaValue`).
+- Do not confuse with FSD `frontend/src/shared` (UI utilities).
 
 ## API
 
@@ -105,8 +119,9 @@ frontend/src/{app,widgets,features,entities,shared}
 ## Security (must preserve)
 
 - **XSS:** sanitize all rich text — `sanitize-html` (backend) + DOMPurify (frontend).
-  Allowed tags: `a`, `code`, `i`, `strong`. `href` limited to `http`/`https`/`mailto`;
-  links get `target="_blank"` + `rel="noopener noreferrer"`. See `validateCommentHtml`.
+  Policy constants live in `@comments-spa/shared` (`ALLOWED_COMMENT_TAGS`, `ALLOWED_LINK_SCHEMES`,
+  `sanitizationPolicy`). Validation: `validateCommentHtml`; links get `target="_blank"` +
+  `rel="noopener noreferrer"`.
 - **SQL injection:** use Prisma only — no raw queries.
 - **Uploads:** MIME/extension whitelist; TXT ≤ 100 KB; images ≤ 5 MB, validated and
   resized to 320×240 via `sharp`.
@@ -121,9 +136,12 @@ frontend/src/{app,widgets,features,entities,shared}
 comments-spa/
 ├── backend/          # Express API, Prisma, uploads
 ├── frontend/         # React SPA (Vite)
+├── packages/
+│   └── shared/       # @comments-spa/shared — types, validators, Zod schemas
 ├── docker/           # nginx template, start.sh
 ├── docs/             # ROADMAP, DB schema
 ├── .cursor/rules/    # file-scoped code-style rules (Cursor)
+├── tsconfig.base.json
 ├── docker-compose.yml
 ├── Dockerfile
 ├── render.yaml

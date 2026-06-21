@@ -31,7 +31,17 @@ tasks:
 
   dev:
     desc: Run frontend and backend in parallel
+    deps: [dev:shared]
+    cmds:
+      - task: dev:servers
+
+  dev:servers:
     deps: [dev:backend, dev:frontend]
+
+  dev:shared:
+    desc: Build @comments-spa/shared before dev servers
+    cmds:
+      - bun --filter @comments-spa/shared build
 
   dev:frontend:
     desc: Vite dev server

@@ -1,10 +1,10 @@
-import type { PrismaClient } from '../generated/prisma/client.js';
-import { prisma } from '../lib/prisma.js';
 import type {
   Comment,
   PaginatedCommentsQuery,
   PaginatedCommentsResult,
-} from '../types/comment.interface.js';
+} from '@comments-spa/shared';
+import type { PrismaClient } from '../generated/prisma/client.js';
+import { prisma } from '../lib/prisma.js';
 
 const PAGE_SIZE = 25;
 

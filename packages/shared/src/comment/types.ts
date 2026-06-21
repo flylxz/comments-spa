@@ -7,8 +7,8 @@ export interface Comment {
   fileUrl: string | null;
   fileName: string | null;
   fileSize: number | null;
-  createdAt: string;
   parentId: number | null;
+  createdAt: string;
   replies: Comment[];
 }
 
@@ -25,18 +25,21 @@ export interface CreateCommentInput {
   parentId?: number;
 }
 
-export interface CommentSortField {
-  field: 'userName' | 'email' | 'createdAt';
-  order: 'asc' | 'desc';
-}
+export type CommentSortField = 'userName' | 'email' | 'createdAt';
+export type CommentSortOrder = 'asc' | 'desc';
 
-export interface PaginatedCommentsQuery {
+export type SortField = CommentSortField;
+export type SortOrder = CommentSortOrder;
+
+export type PaginatedCommentsQuery = {
   page: number;
-  sortBy: CommentSortField['field'];
-  sortOrder: CommentSortField['order'];
-}
+  sortBy: CommentSortField;
+  sortOrder: CommentSortOrder;
+};
 
-export interface PaginatedCommentsResult {
+export type GetCommentsParams = PaginatedCommentsQuery;
+
+export type PaginatedCommentsResult = {
   data: Comment[];
   pagination: {
     page: number;
@@ -44,4 +47,11 @@ export interface PaginatedCommentsResult {
     total: number;
     totalPages: number;
   };
+};
+
+export type PaginatedCommentsResponse = PaginatedCommentsResult;
+
+export interface CommentSortFieldConfig {
+  field: CommentSortField;
+  order: CommentSortOrder;
 }

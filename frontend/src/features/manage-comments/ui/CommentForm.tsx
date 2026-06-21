@@ -1,12 +1,11 @@
+import { validateCommentHtml } from '@comments-spa/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import DOMPurify from 'dompurify';
 import { ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { motion, type Variants } from 'motion/react';
 import { type RefObject, useEffect, useRef, useState } from 'react';
 import { type Control, Controller, useForm } from 'react-hook-form';
-
 import { sanitizeCommentHtml } from '@/entities/comment/lib/sanitizeCommentHtml';
-import { validateCommentHtml } from '@/entities/comment/lib/validateCommentHtml';
 import { useCaptchaQuery } from '@/features/manage-comments/api/useCaptchaQuery';
 import { useCreateCommentMutation } from '@/features/manage-comments/api/useCreateCommentMutation';
 import {

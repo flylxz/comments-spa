@@ -6,7 +6,8 @@
   "workspaces": {
     "packages": [
       "frontend",
-      "backend"
+      "backend",
+      "packages/shared"
     ],
     "catalog": {
       "zod": "^3.25.76",
@@ -15,9 +16,9 @@
     }
   },
   "scripts": {
-    "dev:frontend": "bun --filter comments-spa-frontend dev",
-    "dev:backend": "bun --filter comments-spa-backend dev",
-    "build": "bun --filter '*' build",
+    "dev:frontend": "bun --filter @comments-spa/shared build && bun --filter comments-spa-frontend dev",
+    "dev:backend": "bun --filter @comments-spa/shared build && bun --filter comments-spa-backend dev",
+    "build": "bun --filter @comments-spa/shared build && bun --filter comments-spa-frontend build && bun --filter comments-spa-backend build",
     "typecheck": "bun --filter '*' typecheck",
     "lint": "biome lint .",
     "format": "biome format --write .",

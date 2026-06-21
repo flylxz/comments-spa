@@ -1,7 +1,6 @@
 import type { Server as HttpServer } from 'node:http';
+import type { Comment } from '@comments-spa/shared';
 import { Server as SocketServer } from 'socket.io';
-
-import type { Comment } from '../types/comment.interface.js';
 
 export const COMMENTS_NEW_EVENT = 'comments:new' as const;
 
