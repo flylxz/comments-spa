@@ -21,6 +21,7 @@ export const API_FIELD_MESSAGES = {
   },
   homePage: {
     invalid: 'homePage must be a valid URL',
+    schemeInvalid: 'homePage must be a valid http or https URL',
   },
 } as const;
 
@@ -42,5 +43,9 @@ export const FORM_FIELD_MESSAGES = {
   captchaAnswer: {
     required: 'Captcha answer is required',
     pattern: 'Captcha answer must contain only letters and numbers',
+  },
+  homePage: {
+    invalid: 'Homepage must be a valid URL',
+    schemeInvalid: 'Homepage must be a valid http or https URL',
   },
 } as const;

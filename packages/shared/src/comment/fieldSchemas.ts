@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { CAPTCHA_ANSWER_PATTERN, USER_NAME_PATTERN } from './constants.js';
+import { isAllowedHomePageUrl } from './isAllowedLinkHref.js';
 import { API_FIELD_MESSAGES } from './messages.js';
 
 export type RequiredStringMessages = {
@@ -19,9 +20,12 @@ export type CaptchaAnswerFieldMessages = RequiredStringMessages & {
   pattern: string;
 };
 
-export type HomePageApiFieldMessages = {
+export type HomePageFieldMessages = {
   invalid: string;
+  schemeInvalid: string;
 };
+
+export type HomePageApiFieldMessages = HomePageFieldMessages;
 
 export const createUserNameFieldSchema = (
   messages: UserNameFieldMessages,
@@ -59,12 +63,26 @@ export const createCaptchaAnswerFieldSchema = (
 
 export const createHomePageApiFieldSchema = (
   messages: HomePageApiFieldMessages,
-): z.ZodOptional<z.ZodNullable<z.ZodString>> =>
-  z.string().url(messages.invalid).nullable().optional();
+) =>
+  z
+    .string()
+    .url(messages.invalid)
+    .refine(isAllowedHomePageUrl, messages.schemeInvalid)
+    .nullable()
+    .optional();
 
-export const createHomePageFormFieldSchema = (): z.ZodOptional<
-  z.ZodUnion<[z.ZodLiteral<''>, z.ZodString]>
-> => z.union([z.literal(''), z.string().url()]).optional();
+export const createHomePageFormFieldSchema = (
+  messages: HomePageFieldMessages,
+) =>
+  z
+    .union([
+      z.literal(''),
+      z
+        .string()
+        .url(messages.invalid)
+        .refine(isAllowedHomePageUrl, messages.schemeInvalid),
+    ])
+    .optional();
 
 export const createParentIdApiFieldSchema = (): z.ZodOptional<z.ZodNumber> =>
   z.coerce.number().int().positive().optional();

@@ -19,6 +19,7 @@ export type {
   CaptchaAnswerFieldMessages,
   EmailFieldMessages,
   HomePageApiFieldMessages,
+  HomePageFieldMessages,
   RequiredStringMessages,
   UserNameFieldMessages,
 } from './comment/fieldSchemas.js';
@@ -39,6 +40,7 @@ export {
 } from './comment/fieldSchemas.js';
 
 export {
+  isAllowedHomePageUrl,
   isAllowedLinkHref,
   isExternalHttpLinkHref,
 } from './comment/isAllowedLinkHref.js';

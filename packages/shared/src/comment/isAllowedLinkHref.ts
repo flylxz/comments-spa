@@ -92,3 +92,20 @@ export const isAllowedLinkHref = (href: string): boolean => {
 
   return false;
 };
+
+/** Whitelist homePage URLs: http and https only (no mailto or other schemes). */
+export const isAllowedHomePageUrl = (url: string): boolean => {
+  const trimmed = url.trim();
+
+  if (trimmed.length === 0) {
+    return false;
+  }
+
+  const lower = trimmed.toLowerCase();
+
+  if (lower.startsWith('http://') || lower.startsWith('https://')) {
+    return isValidHttpHref(trimmed);
+  }
+
+  return false;
+};
