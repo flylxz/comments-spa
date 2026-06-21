@@ -1,4 +1,10 @@
-import { validateCommentHtml } from '@comments-spa/shared';
+import {
+  MAX_COMMENT_TEXT_LENGTH,
+  MAX_EMAIL_LENGTH,
+  MAX_HOME_PAGE_LENGTH,
+  MAX_USER_NAME_LENGTH,
+  validateCommentHtml,
+} from '@comments-spa/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import DOMPurify from 'dompurify';
 import { ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
@@ -175,6 +181,7 @@ const CommentTextField = ({
           id="text"
           placeholder="Write your comment..."
           disabled={disabled}
+          maxLength={MAX_COMMENT_TEXT_LENGTH}
           value={field.value}
           onBlur={field.onBlur}
           onChange={field.onChange}
@@ -399,6 +406,7 @@ export const CommentForm = ({
                 id="userName"
                 autoComplete="username"
                 disabled={isPending}
+                maxLength={MAX_USER_NAME_LENGTH}
                 className="h-8 text-sm"
                 {...register('userName')}
               />
@@ -414,6 +422,7 @@ export const CommentForm = ({
                 type="email"
                 autoComplete="email"
                 disabled={isPending}
+                maxLength={MAX_EMAIL_LENGTH}
                 className="h-8 text-sm"
                 {...register('email')}
               />
@@ -428,6 +437,7 @@ export const CommentForm = ({
               type="url"
               placeholder="https://example.com"
               disabled={isPending}
+              maxLength={MAX_HOME_PAGE_LENGTH}
               className="h-8 text-sm"
               {...register('homePage', {
                 onBlur: () => {

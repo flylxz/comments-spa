@@ -8,7 +8,10 @@ import {
   createComment,
   getComments,
 } from '../controllers/commentController.js';
-import { createCommentRateLimiter } from '../middlewares/rateLimiters.js';
+import {
+  createCommentRateLimiter,
+  getCommentsRateLimiter,
+} from '../middlewares/rateLimiters.js';
 import {
   handleUpload,
   processUploadedFile,
@@ -18,7 +21,13 @@ import { validateQuery } from '../middlewares/validateQuery.js';
 
 const commentRoutes = Router();
 
-commentRoutes.get('/', validateQuery(getCommentsQuerySchema), getComments);
+commentRoutes.get(
+  '/',
+  getCommentsRateLimiter,
+  validateQuery(getCommentsQuerySchema),
+  getComments,
+);
+
 commentRoutes.post(
   '/',
   createCommentRateLimiter,
