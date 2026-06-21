@@ -13,9 +13,7 @@ const envSchema = z.object({
     .string()
     .optional()
     .transform((value) =>
-      typeof value === 'string' && value.length > 0
-        ? value
-        : 'http://localhost:3000/api',
+      typeof value === 'string' && value.length > 0 ? value : '/api',
     )
     .pipe(z.string().url().or(z.string().startsWith('/'))),
   VITE_API_ORIGIN: optionalUrl,
