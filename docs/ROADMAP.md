@@ -2,7 +2,7 @@
 
 План доработки проекта до сдачи тестового задания «Комментарии» + рекомендуемые улучшения.
 
-**Статус:** уровень 1 (ТЗ + артефакты) **закрыт**; деплой на Render работает. Остаётся smoke-test, опционально #17 (re-encode) и уровень 4 (тесты).
+**Статус:** уровни 1–3 и 3b (#13–16) **закрыты**; деплой на Render работает. До сдачи: smoke-test по README; опционально #17 (re-encode) и уровень 4 (unit-тесты).
 
 ---
 
@@ -100,36 +100,12 @@
 
 ---
 
-## Порядок веток
-
-```
-main
- ├── feature/comments-table          ✅
- ├── feature/comment-preview         ✅
- ├── refactor/oop-services           ✅
- ├── feature/captcha-validation      ✅
- ├── security/rate-limit             ✅
- ├── security/upload-hardening       ✅
- ├── security/xss-href-hardening     ✅
- ├── security/http-headers           ✅ (+ error sanitization)
- ├── security/captcha-store          ✅ (+ one-time, #13–14)
- ├── security/homepage-whitelist     ✅ (#15)
- ├── security/input-limits           ✅ (#16)
- ├── security/upload-reencode        ← следующий (#17)
- ├── test/security-validators        (#18)
- ├── test/services-error-handler     (#19)
- ├── feature/client-metadata         (опционально)
- ├── docs/readme                     ✅
- └── docs/db-schema                  ✅ (#5)
-```
-
----
-
 ## Сводная оценка времени
 
 | План | Состав | Время |
 |------|--------|-------|
 | **Минимум для сдачи ТЗ** | Уровень 1 | ✅ выполнен |
+| **Security hardening** | Уровни 3 + 3b (#8–16) | ✅ выполнен (#17 частично) |
 | **ТЗ + smoke-test** | Уровень 1 + пройти чек-лист README | ~30–45 мин |
 | **Оставшийся AppSec** | только #17 (re-encode) | ~30–45 мин |
 | **+ Unit-тесты** | Уровень 4 (#18–19) | ~4–5 ч |
@@ -148,14 +124,12 @@ main
 
 ## Что не забыть
 
-| Пункт | Зачем |
-|-------|--------|
-| Схема БД в `docs/db-schema/` | `.mwb` + SQL + ER — обязательный артефакт сдачи (#5) |
-| Preview только через `sanitizeCommentHtml` | Защита от XSS в preview |
-| Smoke-test по README | Явное требование PDF: запуск с нуля (`task setup && task dev`) |
-| JWT / Query / WebSocket в README | API + Security + раздел «Архитектура frontend» |
-| Секция Security в README | Реализованные меры + оставшийся #17 (re-encode) |
-| `prisma migrate deploy` на Render | После изменений схемы БД |
+| Пункт | Зачем | Статус |
+|-------|--------|--------|
+| Smoke-test по README | Явное требование PDF: запуск с нуля (`task setup && task dev`) | ⬜ |
+| #17 re-encode изображений | `sharp.toFile()` вместо raw buffer — опционально перед сдачей | ⚠️ частично |
+
+> **Уже закрыто:** схема БД в [`docs/db-schema/`](db-schema/README.md) (`.mwb`, SQL, ER, #5); preview через `sanitizeCommentHtml` (`CommentForm.tsx`); JWT CAPTCHA, query-параметры и WebSocket — в README (API + «Архитектура frontend»); секция Security; `prisma migrate deploy` при старте контейнера (`docker/start.sh`).
 
 ---
 
