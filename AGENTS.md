@@ -125,7 +125,7 @@ packages/shared/src/comment/
 - **SQL injection:** use Prisma only — no raw queries.
 - **Uploads:** MIME/extension whitelist; TXT ≤ 100 KB; images ≤ 5 MB, validated and
   resized to 320×240 via `sharp`.
-- **CAPTCHA:** JWT-signed (3 min TTL, `JWT_SECRET`); answer must match `[a-zA-Z0-9]+`.
+- **CAPTCHA:** JWT-signed (3 min TTL, `JWT_SECRET`); answer stored server-side (in-memory store, not in JWT payload); one-time use after successful POST; answer must match `[a-zA-Z0-9]+`.
 - **Rate limiting:** `express-rate-limit` — `GET /api/captcha` 30/min, `POST /api/comments` 10/min per IP.
 - **Secrets:** never hardcode credentials; never commit `.env`. Use `process.env`
   and keep `.env.example` up to date.

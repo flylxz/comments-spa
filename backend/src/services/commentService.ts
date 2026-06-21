@@ -76,7 +76,7 @@ export class CommentService {
       throw new FieldValidationError('text', htmlValidationError);
     }
 
-    return this.repository.createCommentRecord({
+    const comment = await this.repository.createCommentRecord({
       userName: input.userName,
       email: input.email,
       homePage: input.homePage ?? null,
@@ -86,6 +86,10 @@ export class CommentService {
       fileSize: input.fileSize ?? null,
       parentId: input.parentId,
     });
+
+    this.captcha.consumeCaptcha(input.captchaId);
+
+    return comment;
   }
 }
 
